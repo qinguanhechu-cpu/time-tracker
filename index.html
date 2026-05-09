@@ -62,6 +62,24 @@
   .chart-container { display: flex; align-items: center; gap: 16px; justify-content: center; flex-wrap: wrap; }
   .chart-canvas-wrap { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
   .chart-canvas-wrap canvas { width: 100%; height: 100%; }
+  .pie-tooltip {
+    position: absolute;
+    z-index: 20;
+    background: rgba(20,20,20,0.92);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transform: translate(-50%, -50%);
+    display: none;
+  }
+  .pie-tooltip.visible { display: block; }
+  .pie-tooltip .tooltip-label { font-size: 1rem; font-weight: 600; }
+  .pie-tooltip .tooltip-hours { font-size: 1.3rem; font-weight: 800; margin-top: 2px; }
   .chart-center-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
   .chart-center-text .hours { font-size: 1.4rem; font-weight: 700; }
   .chart-center-text .label { font-size: 0.7rem; color: var(--text-light); }
@@ -574,6 +592,9 @@ async function renderMultiDayChart(container) {
   renderChartFromEntries(allEntries, container, label);
 }
 
+let pieChartData = null;
+let pieSelectedColor = null;
+
 function renderChartFromEntries(entries, container, centerLabel) {
   const colorMap = {};
   entries.forEach(e => {
@@ -587,28 +608,152 @@ function renderChartFromEntries(entries, container, centerLabel) {
   Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count).forEach(([color, info]) => {
     const h = info.count * 0.5;
     const pct = Math.round(info.count / total * 100);
-    legendHTML += `<div class="legend-item"><span class="legend-dot" style="background:${color}"></span><span class="legend-label">${info.label}</span><span class="legend-value">${h%1===0?h:h.toFixed(1)}h (${pct}%)</span></div>`;
+    legendHTML += `<div class="legend-item" data-color="${color}" style="cursor:pointer"><span class="legend-dot" style="background:${color}"></span><span class="legend-label">${info.label}</span><span class="legend-value">${h%1===0?h:h.toFixed(1)}h (${pct}%)</span></div>`;
   });
-  container.innerHTML = `<div class="chart-container"><div class="chart-canvas-wrap"><canvas id="pieCanvas" width="280" height="280"></canvas><div class="chart-center-text"><div class="hours">${hours%1===0?hours:hours.toFixed(1)}h</div><div class="label">${centerLabel}</div></div></div><div class="chart-legend">${legendHTML}</div></div>`;
-  requestAnimationFrame(() => {
-    const canvas = document.getElementById('pieCanvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const cx = 140, cy = 140, outerR = 130, innerR = 72;
-    ctx.clearRect(0, 0, 280, 280);
-    let angle = -Math.PI / 2;
-    Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count).forEach(([color, info]) => {
-      const slice = (info.count / total) * Math.PI * 2;
-      if (slice < 0.01) return;
-      ctx.beginPath();
-      ctx.arc(cx, cy, outerR, angle + 0.01, angle + slice - 0.01);
-      ctx.arc(cx, cy, innerR, angle + slice - 0.01, angle + 0.01, true);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-      angle += slice;
+  container.innerHTML = `<div class="chart-container"><div class="chart-canvas-wrap"><canvas id="pieCanvas" width="280" height="280"></canvas><div class="chart-center-text"><div class="hours">${hours%1===0?hours:hours.toFixed(1)}h</div><div class="label">${centerLabel}</div></div><div class="pie-tooltip" id="pieTooltip"><div class="tooltip-label"></div><div class="tooltip-hours"></div></div></div><div class="chart-legend">${legendHTML}</div></div>`;
+
+  // Add click handlers to legend items
+  container.querySelectorAll('.legend-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const color = item.dataset.color;
+      pieSelectedColor = (pieSelectedColor === color) ? null : color;
+      drawPieChart();
     });
   });
+
+  // Store pie data for click handling
+  pieChartData = { colorMap, total, cx: 140, cy: 140, outerR: 130, innerR: 72 };
+  pieSelectedColor = null;
+  drawPieChart();
+
+  // Add click handler
+  const canvas = document.getElementById('pieCanvas');
+  if (canvas) {
+    canvas.onclick = handlePieClick;
+  }
+}
+
+function drawPieChart() {
+  if (!pieChartData) return;
+  const { colorMap, total, cx, cy, outerR, innerR } = pieChartData;
+  const canvas = document.getElementById('pieCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 280, 280);
+  let angle = -Math.PI / 2;
+
+  Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count).forEach(([color, info]) => {
+    const slice = (info.count / total) * Math.PI * 2;
+    if (slice < 0.01) return;
+
+    const midAngle = angle + slice / 2;
+    const isSelected = pieSelectedColor === color;
+    const offset = isSelected ? 18 : 0;
+    const offsetX = Math.cos(midAngle) * offset;
+    const offsetY = Math.sin(midAngle) * offset;
+
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+
+    // Draw shadow for selected
+    if (isSelected) {
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 4;
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, angle + 0.01, angle + slice - 0.01);
+    ctx.arc(cx, cy, innerR, angle + slice - 0.01, angle + 0.01, true);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Add white border for selected
+    if (isSelected) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    angle += slice;
+  });
+
+  // Show/hide HTML tooltip
+  const tooltip = document.getElementById('pieTooltip');
+  if (tooltip) {
+    if (pieSelectedColor && colorMap[pieSelectedColor]) {
+      const info = colorMap[pieSelectedColor];
+      const h = info.count * 0.5;
+      const pct = Math.round(info.count / total * 100);
+      tooltip.querySelector('.tooltip-label').textContent = info.label;
+      tooltip.querySelector('.tooltip-hours').textContent = `${h%1===0?h:h.toFixed(1)}h (${pct}%)`;
+
+      // Position tooltip outside the selected slice
+      let selAngle = -Math.PI / 2;
+      for (const [color, inf] of Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count)) {
+        const sl = (inf.count / total) * Math.PI * 2;
+        if (color === pieSelectedColor) {
+          const midAngle = selAngle + sl / 2;
+          const tooltipR = outerR + 50;
+          const tx = cx + Math.cos(midAngle) * tooltipR;
+          const ty = cy + Math.sin(midAngle) * tooltipR;
+          // Convert canvas coords to percentage of canvas-wrap
+          const pctX = (tx / 280) * 100;
+          const pctY = (ty / 280) * 100;
+          tooltip.style.left = pctX + '%';
+          tooltip.style.top = pctY + '%';
+          tooltip.classList.add('visible');
+          break;
+        }
+        selAngle += sl;
+      }
+    } else {
+      tooltip.classList.remove('visible');
+    }
+  }
+}
+
+function handlePieClick(e) {
+  if (!pieChartData) return;
+  const canvas = document.getElementById('pieCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = 280 / rect.width;
+  const scaleY = 280 / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+
+  const { cx, cy, outerR, innerR, colorMap, total } = pieChartData;
+  const dx = x - cx;
+  const dy = y - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < innerR || dist > outerR + 10) {
+    // Clicked center or outside, deselect
+    pieSelectedColor = null;
+    drawPieChart();
+    return;
+  }
+
+  // Calculate angle
+  let angle = Math.atan2(dy, dx);
+  if (angle < -Math.PI / 2) angle += Math.PI * 2;
+  let startAngle = -Math.PI / 2;
+
+  for (const [color, info] of Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count)) {
+    const slice = (info.count / total) * Math.PI * 2;
+    if (angle >= startAngle && angle < startAngle + slice) {
+      pieSelectedColor = (pieSelectedColor === color) ? null : color;
+      drawPieChart();
+      return;
+    }
+    startAngle += slice;
+  }
+
+  pieSelectedColor = null;
+  drawPieChart();
 }
 
 // ===== SLEEP BLOCK =====
