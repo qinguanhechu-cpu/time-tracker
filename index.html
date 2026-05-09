@@ -538,11 +538,20 @@ function getDateRangeForPeriod() {
   return { startDate, endDate };
 }
 
+const SLEEP_COLOR = '#3bc9db';
+
 function getEntriesForDateRange(data) {
   const entries = [];
   for (let i = 0; i < 24; i++) {
     if (data[i] && data[i].text) entries.push(data[i]);
+    else if (i >= SLEEP_START && i < SLEEP_END && !data[i]) {
+      // 睡眠时段默认算作休息
+      entries.push({ text: COLOR_LABELS[SLEEP_COLOR], color: SLEEP_COLOR, note: '' });
+    }
     if (data[i + '.5'] && data[i + '.5'].text) entries.push(data[i + '.5']);
+    else if ((i + 0.5) >= SLEEP_START && (i + 0.5) < SLEEP_END && !data[i + '.5']) {
+      entries.push({ text: COLOR_LABELS[SLEEP_COLOR], color: SLEEP_COLOR, note: '' });
+    }
   }
   return entries;
 }
@@ -767,7 +776,6 @@ function renderSleepBlock() {
   const label = block.querySelector('.sleep-label');
   label.textContent = filled === 0 ? '睡眠时段 · 点击展开记录' : filled === total ? `睡眠时段 · 已全部记录 (${SLEEP_END-SLEEP_START}小时)` : `睡眠时段 · 已记录 ${filled}/${total}`;
   div.innerHTML = '';
-  const SLEEP_COLOR = '#3bc9db';
   for (let i = SLEEP_START; i < SLEEP_END; i++) {
     [{ s: i, l: `${String(i).padStart(2,'0')}:00-${String(i).padStart(2,'0')}:30`, a: dayData[i] }, { s: i+'.5', l: `${String(i).padStart(2,'0')}:30-${String(i+1).padStart(2,'0')}:00`, a: dayData[i+'.5'] }].forEach(({ s, l, a }) => {
       const has = a && a.text;
