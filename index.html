@@ -463,9 +463,18 @@ function connectToFirebase(username) {
   setSyncStatus('online', '连接中...');
   unsubscribe = ref.onSnapshot((snap) => {
     if (snap.exists) {
-      const allData = snap.data();
-      allCachedDays = allData;
-      dayData = allData[getDateKey(currentDate)] || {};
+      const rawData = snap.data();
+      // Detect data format: new format has date keys like "2026-05-09", old format has numeric keys like "0", "0.5"
+      const hasDateKeys = Object.keys(rawData).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+      if (hasDateKeys) {
+        allCachedDays = rawData;
+      } else {
+        // Old format: migrate to new format
+        allCachedDays = { [getDateKey(currentDate)]: rawData };
+        // Save migrated data back to Firebase
+        db.collection('timeData').doc(username).set(allCachedDays).catch(() => {});
+      }
+      dayData = allCachedDays[getDateKey(currentDate)] || {};
     } else {
       allCachedDays = {};
       dayData = {};
@@ -483,8 +492,17 @@ function connectToFirebase(username) {
 function loadLocalData() {
   try {
     const all = JSON.parse(localStorage.getItem('timeTrackerAllDays') || '{}');
-    allCachedDays = all;
-    dayData = all[getDateKey(currentDate)] || {};
+    // Detect format
+    const hasDateKeys = Object.keys(all).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+    if (hasDateKeys) {
+      allCachedDays = all;
+    } else if (Object.keys(all).length > 0) {
+      // Old format
+      allCachedDays = { [getDateKey(currentDate)]: all };
+    } else {
+      allCachedDays = {};
+    }
+    dayData = allCachedDays[getDateKey(currentDate)] || {};
   } catch (e) { allCachedDays = {}; dayData = {}; }
 }
 
