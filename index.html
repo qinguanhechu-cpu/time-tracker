@@ -370,21 +370,11 @@
 </div>
 <input type="file" id="importInput" accept=".json">
 
-<script src="https://unpkg.com/firebase@10.12.2/firebase-app-compat.js"></script>
-<script src="https://unpkg.com/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBds0R-1ks9VZnO6iEUM-el94E77dzHEWU",
-  authDomain: "time-tracker-a9acb.firebaseapp.com",
-  projectId: "time-tracker-a9acb",
-  storageBucket: "time-tracker-a9acb.firebasestorage.app",
-  messagingSenderId: "843669525828",
-  appId: "1:843669525828:web:ff62cd807fbad05000b311",
-  measurementId: "G-F531WV6NL4"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const SUPABASE_URL = 'https://jsreyokzmlpwsmlffiqq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_8V8gFZ-RM61be5mVVuE_8g_SfjnRPZO';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const COLORS = ['#50c878', '#4a6cf7', '#ff6b6b', '#9775fa', '#ffd43b', '#ffa94d', '#3bc9db'];
 const COLOR_LABELS = { '#50c878': '工作', '#4a6cf7': '交通', '#ff6b6b': '学习', '#9775fa': '娱乐', '#ffd43b': '输出', '#ffa94d': '生活', '#3bc9db': '休息' };
@@ -397,7 +387,7 @@ let allCachedDays = {};
 let editingSlots = [];
 let isSleepExpanded = false;
 let currentUser = '';
-let unsubscribe = null;
+let syncInterval = null;
 let chartPeriod = 'day'; // 'day', 'week', 'month'
 
 // Long-press to box-select state
@@ -444,11 +434,11 @@ function doLogin(username) {
   localStorage.setItem('tt_username', username);
   document.getElementById('userName').textContent = username;
   hideLoginModal();
-  connectToFirebase(username);
+  connectToSupabase(username);
 }
 
 function switchUser() {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
   dayData = {}; currentUser = '';
   localStorage.removeItem('tt_username');
   document.getElementById('userName').textContent = '未登录';
@@ -457,47 +447,42 @@ function switchUser() {
   showLoginModal();
 }
 
-function connectToFirebase(username) {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  const ref = db.collection('timeData').doc(username);
+function connectToSupabase(username) {
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
   setSyncStatus('online', '连接中...');
-  unsubscribe = ref.onSnapshot((snap) => {
-    if (snap.exists) {
-      const rawData = snap.data();
-      // Detect data format: new format has date keys like "2026-05-09", old format has numeric keys like "0", "0.5"
-      const hasDateKeys = Object.keys(rawData).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
-      if (hasDateKeys) {
-        allCachedDays = rawData;
-      } else {
-        // Old format: migrate to new format
-        allCachedDays = { [getDateKey(currentDate)]: rawData };
-        // Save migrated data back to Firebase
-        db.collection('timeData').doc(username).set(allCachedDays).catch(() => {});
-      }
-      dayData = allCachedDays[getDateKey(currentDate)] || {};
-    } else {
-      allCachedDays = {};
-      dayData = {};
-    }
-    setSyncStatus('online', '已同步');
-    renderAll();
-  }, (err) => {
-    console.error('Firebase error:', err);
-    setSyncStatus('error', '同步失败');
-    loadLocalData();
-    renderAll();
-  });
+
+  function fetchData() {
+    supabase
+      .from('time_data')
+      .select('*')
+      .eq('username', username)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Supabase error:', error);
+          setSyncStatus('error', '同步失败');
+          return;
+        }
+        allCachedDays = {};
+        if (data && data.length > 0) {
+          data.forEach(row => { allCachedDays[row.date] = row.data; });
+        }
+        dayData = allCachedDays[getDateKey(currentDate)] || {};
+        setSyncStatus('online', '已同步');
+        renderAll();
+      });
+  }
+
+  fetchData();
+  syncInterval = setInterval(fetchData, 10000);
 }
 
 function loadLocalData() {
   try {
     const all = JSON.parse(localStorage.getItem('timeTrackerAllDays') || '{}');
-    // Detect format
     const hasDateKeys = Object.keys(all).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
     if (hasDateKeys) {
       allCachedDays = all;
     } else if (Object.keys(all).length > 0) {
-      // Old format
       allCachedDays = { [getDateKey(currentDate)]: all };
     } else {
       allCachedDays = {};
@@ -507,16 +492,17 @@ function loadLocalData() {
 }
 
 async function fetchDaysForChart() {
-  // Data is already loaded via onSnapshot, just ensure we have it
-  // No additional fetch needed since all days are in the same document
   return Promise.resolve();
 }
 
 async function saveToFirebase() {
   try {
     allCachedDays[getDateKey(currentDate)] = dayData;
-    await db.collection('timeData').doc(currentUser).set(allCachedDays);
     localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
+
+    await supabase
+      .from('time_data')
+      .upsert({ username: currentUser, date: getDateKey(currentDate), data: dayData }, { onConflict: 'username,date' });
   } catch (e) {
     console.error(e);
     showToast('云端保存失败');
@@ -1204,7 +1190,7 @@ const saved = localStorage.getItem('tt_username');
 if (saved && isValidUsername(saved)) {
   currentUser = saved;
   document.getElementById('userName').textContent = saved;
-  connectToFirebase(saved);
+  connectToSupabase(saved);
 } else {
   showLoginModal();
 }
