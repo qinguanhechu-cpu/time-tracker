@@ -237,7 +237,8 @@
   .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--primary); }
   .modal input::placeholder { color: #bbb; }
   .modal .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-  .modal .color-option { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; }
+  .modal .color-option { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; position: relative; }
+  .modal .color-option::after { content: ''; position: absolute; inset: -8px; } /* 增大触摸区域 */
   .modal .color-option:hover { transform: scale(1.15); }
   .modal .color-option.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--card-bg); }
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
@@ -342,7 +343,8 @@
     .modal .time-hint { font-size: 0.85rem; }
     .modal input, .modal textarea { padding: 12px 14px; font-size: 1rem; }
     .modal-actions button { padding: 10px 18px; font-size: 0.9rem; min-height: 44px; }
-    .modal .color-option { width: 32px; height: 32px; }
+    .modal .color-picker { gap: 12px; }
+    .modal .color-option { width: 40px; height: 40px; border-width: 3px; }
 
     /* 登录弹窗 */
     .login-modal .modal { max-width: 90%; }
@@ -755,6 +757,11 @@ function drawPieChart() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 280, 280);
+  // 重置所有绘制状态，防止叠加
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
   let angle = -Math.PI / 2;
 
   Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count).forEach(([color, info]) => {
@@ -770,12 +777,17 @@ function drawPieChart() {
     ctx.save();
     ctx.translate(offsetX, offsetY);
 
-    // Draw shadow for selected
+    // 绘制阴影（仅选中项）
     if (isSelected) {
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 20;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 4;
+    } else {
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     }
 
     ctx.beginPath();
@@ -785,7 +797,7 @@ function drawPieChart() {
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Add white border for selected
+    // 选中项添加白色边框
     if (isSelected) {
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 3;
