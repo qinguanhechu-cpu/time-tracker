@@ -18,16 +18,11 @@
     --shadow-lg: 0 4px 16px rgba(0,0,0,0.1);
     --radius: 10px;
     --sleep-bg: #e8ecf4;
-    --sleep-text: #9ca3af;
-    --drag-highlight: rgba(74,108,247,0.15);
+    --select-bg: rgba(74,108,247,0.12);
+    --select-border: #4a6cf7;
   }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    -webkit-tap-highlight-color: transparent;
-  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -37,658 +32,196 @@
     min-height: 100vh;
   }
 
-  .container {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 16px;
-  }
+  .container { max-width: 680px; margin: 0 auto; padding: 16px; }
 
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .header-left { display: flex; flex-direction: column; gap: 4px; }
+  h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; }
+
+  .user-bar { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-light); }
+  .user-name { font-weight: 600; color: var(--primary); cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+  .user-name:hover { background: var(--primary-light); }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #52c41a; display: inline-block; }
+
+  .date-nav { display: flex; align-items: center; gap: 6px; background: var(--card-bg); border-radius: var(--radius); padding: 4px; box-shadow: var(--shadow); }
+  .date-nav button { background: transparent; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 0.85rem; color: var(--text); }
+  .date-nav button:hover { background: var(--primary-light); color: var(--primary); }
+  .date-nav .current-date { font-weight: 600; min-width: 110px; text-align: center; font-size: 0.85rem; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); text-align: center; }
+  .stat-card .label { font-size: 0.7rem; color: var(--text-light); }
+  .stat-card .value { font-size: 1.3rem; font-weight: 700; margin-top: 2px; color: var(--primary); }
+
+  .chart-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; }
+  .chart-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .chart-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .chart-tab { flex: 1; padding: 6px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--card-bg); cursor: pointer; font-size: 0.75rem; font-weight: 500; text-align: center; transition: all 0.15s; color: var(--text-light); }
+  .chart-tab.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+  .chart-container { display: flex; align-items: center; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .chart-canvas-wrap { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
+  .chart-canvas-wrap canvas { width: 100%; height: 100%; }
+  .chart-center-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+  .chart-center-text .hours { font-size: 1.4rem; font-weight: 700; }
+  .chart-center-text .label { font-size: 0.7rem; color: var(--text-light); }
+  .chart-legend { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 120px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { flex: 1; }
+  .legend-value { font-weight: 600; color: var(--text-light); font-size: 0.75rem; }
+  .chart-empty { text-align: center; padding: 20px; color: var(--text-light); font-size: 0.85rem; }
+
+  .actions { display: flex; gap: 8px; margin-bottom: 16px; }
+  .actions button { flex: 1; background: var(--primary); color: white; border: none; border-radius: var(--radius); padding: 10px 12px; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
+  .actions button:hover { opacity: 0.9; }
+  .actions button.secondary { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
+  .actions button.danger { background: var(--card-bg); color: #ff4d4f; border: 1px solid #ffccc7; }
+
+  .mode-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .mode-btn { flex: 1; padding: 8px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--card-bg); cursor: pointer; font-size: 0.8rem; font-weight: 500; text-align: center; transition: all 0.15s; }
+  .mode-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+
+  .color-legend {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 16px;
     margin-bottom: 16px;
   }
-
-  .header-left {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  h1 {
-    font-size: 1.35rem;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    color: var(--text);
-  }
-
-  .user-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .color-legend h3 {
     font-size: 0.75rem;
-    color: var(--text-light);
-  }
-
-  .user-name {
-    font-weight: 600;
-    color: var(--primary);
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: background 0.15s;
-  }
-
-  .user-name:hover {
-    background: var(--primary-light);
-  }
-
-  .sync-status {
-    font-size: 0.7rem;
-    color: var(--text-light);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .sync-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #52c41a;
-    display: inline-block;
-  }
-
-  .sync-dot.offline { background: #faad14; }
-  .sync-dot.error { background: #ff4d4f; }
-
-  .date-nav {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    padding: 4px;
-    box-shadow: var(--shadow);
-  }
-
-  .date-nav button {
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 10px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: var(--text);
-    transition: all 0.15s;
-  }
-
-  .date-nav button:hover {
-    background: var(--primary-light);
-    color: var(--primary);
-  }
-
-  .date-nav .current-date {
-    font-weight: 600;
-    min-width: 110px;
-    text-align: center;
-    font-size: 0.85rem;
-    padding: 0 4px;
-  }
-
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .stat-card {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    box-shadow: var(--shadow);
-    text-align: center;
-  }
-
-  .stat-card .label {
-    font-size: 0.7rem;
-    color: var(--text-light);
-    letter-spacing: 0.3px;
-  }
-
-  .stat-card .value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-top: 2px;
-    color: var(--primary);
-  }
-
-  .actions {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .actions button {
-    flex: 1;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-
-  .actions button:hover { opacity: 0.9; transform: translateY(-1px); }
-  .actions button:active { transform: translateY(0); }
-
-  .actions button.secondary {
-    background: var(--card-bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-
-  .actions button.secondary:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-  }
-
-  .actions button.danger {
-    background: var(--card-bg);
-    color: #ff4d4f;
-    border: 1px solid #ffccc7;
-  }
-
-  /* Pie chart */
-  .chart-card {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
-  .chart-card h3 {
-    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-light);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-
-  .chart-container {
+  .color-legend-grid {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    justify-content: center;
     flex-wrap: wrap;
+    gap: 10px;
   }
-
-  .chart-canvas-wrap {
-    position: relative;
-    width: 140px;
-    height: 140px;
-    flex-shrink: 0;
-  }
-
-  .chart-canvas-wrap canvas {
-    width: 100%;
-    height: 100%;
-  }
-
-  .chart-center-text {
-    position: absolute;
-    inset: 0;
+  .color-legend-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    pointer-events: none;
+    gap: 6px;
+    font-size: 0.8rem;
   }
-
-  .chart-center-text .hours {
-    font-size: 1.4rem;
-    font-weight: 700;
+  .color-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .color-legend-label {
+    font-weight: 500;
     color: var(--text);
   }
 
-  .chart-center-text .label {
-    font-size: 0.7rem;
-    color: var(--text-light);
-  }
-
-  .chart-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-    min-width: 120px;
-  }
-
-  .legend-item {
-    display: flex;
+  .selection-info {
+    display: none;
     align-items: center;
     gap: 8px;
+    padding: 10px 14px;
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .selection-info.visible { display: flex; }
+  .selection-info button {
+    margin-left: auto;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
     font-size: 0.8rem;
   }
 
-  .legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .legend-label {
-    flex: 1;
-    color: var(--text);
-  }
-
-  .legend-value {
-    font-weight: 600;
-    color: var(--text-light);
-    font-size: 0.75rem;
-  }
-
-  .chart-empty {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-light);
-    font-size: 0.85rem;
-  }
-
-  /* Sleep block */
-  .sleep-block {
-    background: var(--sleep-bg);
-    border-radius: var(--radius);
-    margin-bottom: 16px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    transition: all 0.2s;
-  }
-
+  .sleep-block { background: var(--sleep-bg); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; box-shadow: var(--shadow); }
   .sleep-block.collapsed { cursor: pointer; }
-  .sleep-block.collapsed:hover { box-shadow: var(--shadow-lg); }
-
-  .sleep-header {
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .sleep-icon {
-    font-size: 1.4rem;
-    width: 40px;
-    height: 40px;
-    background: rgba(74,108,247,0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
+  .sleep-header { padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  .sleep-icon { font-size: 1.4rem; width: 40px; height: 40px; background: rgba(74,108,247,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .sleep-info { flex: 1; }
   .sleep-info .time-range { font-weight: 600; font-size: 0.9rem; }
   .sleep-info .sleep-label { font-size: 0.75rem; color: var(--text-light); }
-
-  .sleep-toggle {
-    font-size: 0.75rem;
-    color: var(--primary);
-    background: rgba(74,108,247,0.1);
-    padding: 4px 10px;
-    border-radius: 20px;
-    flex-shrink: 0;
-  }
-
+  .sleep-toggle { font-size: 0.75rem; color: var(--primary); background: rgba(74,108,247,0.1); padding: 4px 10px; border-radius: 20px; flex-shrink: 0; }
   .sleep-block.collapsed .sleep-activities { display: none; }
+  .sleep-activities { border-top: 1px solid rgba(0,0,0,0.05); padding: 8px 16px 12px; }
 
-  .sleep-activities {
-    border-top: 1px solid rgba(0,0,0,0.05);
-    padding: 8px 16px 12px;
-  }
-
-  /* Time blocks */
-  .time-blocks {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-  }
-
-  .period-label {
-    padding: 10px 16px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-light);
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .time-block {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.1s;
-    min-height: 44px;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
+  .time-blocks { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .period-label { padding: 10px 16px; font-size: 0.75rem; font-weight: 600; color: var(--text-light); background: var(--bg); border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
+  .time-block { display: flex; border-bottom: 1px solid var(--border); min-height: 44px; }
   .time-block:last-child { border-bottom: none; }
   .time-block:hover { background: var(--hover); }
-
-  .time-block.dragging-over {
-    background: var(--drag-highlight) !important;
-  }
-
-  .time-label {
-    width: 56px;
-    padding: 10px 8px;
-    font-size: 0.75rem;
-    color: var(--text-light);
-    border-right: 1px solid var(--border);
-    text-align: right;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    font-weight: 500;
-  }
-
-  .time-content {
-    flex: 1;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    min-height: 44px;
-    transition: all 0.15s;
-  }
-
+  .time-label { width: 82px; padding: 10px 8px; font-size: 0.75rem; color: var(--text-light); border-right: 1px solid var(--border); text-align: right; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; font-weight: 500; white-space: nowrap; }
+  .time-content { flex: 1; padding: 10px 12px; display: flex; align-items: center; cursor: pointer; min-height: 44px; position: relative; }
   .time-content.empty { color: #d9d9d9; }
   .time-content.empty::after { content: "+"; font-size: 1.1rem; }
-  .time-content.empty:hover { background: var(--primary-light); }
+  .time-content.filled { border-left: 3px solid var(--block-color, var(--primary)); background: var(--block-bg, var(--primary-light)); }
 
-  .time-content.filled {
-    border-left: 3px solid var(--block-color, var(--primary));
-    background: var(--block-bg, var(--primary-light));
-  }
+  /* Box selection styles */
+  .time-content.selectable { cursor: crosshair; }
+  .time-content.selected { background: var(--select-bg) !important; outline: 2px solid var(--select-border); outline-offset: -2px; }
+  .time-content.empty.selectable::after { content: ""; }
+  .time-content.empty.selectable.selected::after { content: "✓"; color: var(--primary); }
 
-  .time-content .activity {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .time-content .activity-text {
-    flex: 1;
-    font-size: 0.85rem;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .time-content .activity-note {
-    font-size: 0.7rem;
-    color: var(--text-light);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100px;
-  }
-
-  .time-content .edit-btn {
-    background: none;
-    border: none;
-    color: var(--text-light);
-    cursor: pointer;
-    font-size: 0.75rem;
-    padding: 4px 6px;
-    border-radius: 4px;
-    transition: all 0.15s;
-    flex-shrink: 0;
-  }
-
-  .time-content .edit-btn:hover {
-    background: rgba(0,0,0,0.05);
-    color: var(--text);
-  }
-
-  /* Drag hint */
-  .drag-hint {
-    text-align: center;
-    padding: 8px;
-    font-size: 0.75rem;
-    color: var(--text-light);
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    margin-bottom: 12px;
-    box-shadow: var(--shadow);
-  }
-
-  .drag-hint span {
-    color: var(--primary);
-    font-weight: 500;
-  }
-
-  /* Modal */
-  .modal-overlay {
+  /* Selection box overlay */
+  #selectionBox {
     display: none;
     position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    backdrop-filter: blur(2px);
-  }
-
-  .modal-overlay.active { display: flex; }
-
-  .modal {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 24px;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    animation: modalIn 0.2s ease;
-  }
-
-  @keyframes modalIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-
-  .modal h2 {
-    font-size: 1.05rem;
-    margin-bottom: 4px;
-    font-weight: 600;
-  }
-
-  .modal .time-hint {
-    font-size: 0.8rem;
-    color: var(--text-light);
-    margin-bottom: 16px;
-  }
-
-  .modal input, .modal textarea {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 0.95rem;
-    margin-bottom: 12px;
-    font-family: inherit;
-    transition: border-color 0.2s;
-  }
-
-  .modal textarea {
-    resize: vertical;
-    min-height: 60px;
-  }
-
-  .modal input:focus, .modal textarea:focus {
-    outline: none;
-    border-color: var(--primary);
-  }
-
-  .modal input::placeholder { color: #bbb; }
-
-  .modal .color-picker {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 18px;
-  }
-
-  .modal .color-option {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 2.5px solid transparent;
-    cursor: pointer;
-    transition: transform 0.15s;
-  }
-
-  .modal .color-option:hover { transform: scale(1.15); }
-
-  .modal .color-option.selected {
-    border-color: var(--text);
-    box-shadow: 0 0 0 2px var(--card-bg);
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-
-  .modal-actions button {
-    padding: 8px 20px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: none;
-    transition: all 0.15s;
-  }
-
-  .modal-actions .save { background: var(--primary); color: white; }
-  .modal-actions .save:hover { opacity: 0.9; }
-  .modal-actions .cancel { background: var(--hover); color: var(--text); }
-  .modal-actions .cancel:hover { background: var(--border); }
-
-  .modal-actions .delete {
-    background: transparent;
-    color: #ff4d4f;
-    margin-right: auto;
-    border: 1px solid #ffccc7;
-  }
-
-  .modal-actions .delete:hover { background: #fff2f0; }
-
-  /* Login Modal */
-  .login-modal .modal {
-    max-width: 340px;
-    text-align: center;
-  }
-
-  .login-modal .login-icon { font-size: 2.5rem; margin-bottom: 8px; }
-  .login-modal .login-desc {
-    font-size: 0.85rem;
-    color: var(--text-light);
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-
-  .login-modal input {
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: 500;
-    letter-spacing: 1px;
-  }
-
-  .login-modal .login-hint {
-    font-size: 0.75rem;
-    color: var(--text-light);
-    margin-bottom: 16px;
-  }
-
-  .login-modal .login-btn {
-    width: 100%;
-    padding: 12px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: var(--radius);
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-
-  .login-modal .login-btn:hover { opacity: 0.9; }
-  .login-modal .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: #333;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    z-index: 200;
-    transition: transform 0.3s ease;
-    white-space: nowrap;
-  }
-
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  #importInput { display: none; }
-
-  .loading-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(255,255,255,0.8);
+    border: 2px dashed var(--primary);
+    background: rgba(74,108,247,0.08);
+    pointer-events: none;
     z-index: 50;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 12px;
+    border-radius: 4px;
   }
 
+  .time-content .activity { display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden; }
+  .time-content .activity-text { flex: 1; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .time-content .activity-note { font-size: 0.7rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+  .time-content .edit-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 0.75rem; padding: 4px 6px; border-radius: 4px; flex-shrink: 0; }
+  .time-content .edit-btn:hover { background: rgba(0,0,0,0.05); color: var(--text); }
+  .time-content .check-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.85rem; padding: 2px 4px; flex-shrink: 0; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(2px); }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--card-bg); border-radius: 16px; padding: 24px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: modalIn 0.2s ease; }
+  @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h2 { font-size: 1.05rem; margin-bottom: 4px; font-weight: 600; }
+  .modal .time-hint { font-size: 0.8rem; color: var(--text-light); margin-bottom: 16px; }
+  .modal input, .modal textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 0.95rem; margin-bottom: 12px; font-family: inherit; }
+  .modal textarea { resize: vertical; min-height: 60px; }
+  .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--primary); }
+  .modal input::placeholder { color: #bbb; }
+  .modal .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .modal .color-option { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; }
+  .modal .color-option:hover { transform: scale(1.15); }
+  .modal .color-option.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--card-bg); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-actions button { padding: 8px 20px; border-radius: var(--radius); cursor: pointer; font-size: 0.85rem; font-weight: 500; border: none; }
+  .modal-actions .save { background: var(--primary); color: white; }
+  .modal-actions .cancel { background: var(--hover); color: var(--text); }
+  .modal-actions .delete { background: transparent; color: #ff4d4f; margin-right: auto; border: 1px solid #ffccc7; }
+
+  .login-modal .modal { max-width: 340px; text-align: center; }
+  .login-modal .login-icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .login-modal .login-desc { font-size: 0.85rem; color: var(--text-light); margin-bottom: 20px; line-height: 1.6; }
+  .login-modal input { text-align: center; font-size: 1.1rem; font-weight: 500; letter-spacing: 1px; }
+  .login-modal .login-hint { font-size: 0.75rem; color: var(--text-light); margin-bottom: 16px; }
+  .login-modal .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; z-index: 200; transition: transform 0.3s ease; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  #importInput { display: none; }
+  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 50; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
   .loading-overlay.active { display: flex; }
-
-  .spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--border);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 500px) {
@@ -700,15 +233,14 @@
     .stat-card { padding: 10px 8px; }
     .stat-card .value { font-size: 1.1rem; }
     .actions button { padding: 9px 8px; font-size: 0.75rem; }
-    .time-label { width: 48px; font-size: 0.7rem; padding: 8px 6px; }
+    .time-label { width: 72px; font-size: 0.7rem; padding: 8px 6px; white-space: nowrap; }
     .time-content { padding: 8px 10px; min-height: 40px; }
     .time-content .activity-text { font-size: 0.8rem; }
-    .time-content .edit-btn { opacity: 1; padding: 4px; }
     .sleep-header { padding: 12px 14px; }
-    .sleep-icon { width: 36px; height: 36px; font-size: 1.2rem; }
-    .chart-container { flex-direction: column; align-items: center; }
+    .chart-container { flex-direction: column; }
     .chart-canvas-wrap { width: 120px; height: 120px; }
-    .drag-hint { font-size: 0.7rem; padding: 6px; }
+    .color-legend-grid { gap: 8px; }
+    .color-legend-item { font-size: 0.75rem; }
   }
 </style>
 </head>
@@ -734,29 +266,35 @@
   </header>
 
   <div class="stats">
-    <div class="stat-card">
-      <div class="label">已记录</div>
-      <div class="value" id="statRecorded">0h</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">空闲</div>
-      <div class="value" id="statEmpty">24h</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">活动数</div>
-      <div class="value" id="statActivities">0</div>
-    </div>
+    <div class="stat-card"><div class="label">已记录</div><div class="value" id="statRecorded">0h</div></div>
+    <div class="stat-card"><div class="label">空闲</div><div class="value" id="statEmpty">24h</div></div>
+    <div class="stat-card"><div class="label">活动数</div><div class="value" id="statActivities">0</div></div>
   </div>
 
   <div class="chart-card" id="chartCard">
-    <h3>今日时间分布</h3>
-    <div id="chartContent">
-      <div class="chart-empty">记录一些活动后，这里会显示时间分布</div>
+    <h3>时间分布</h3>
+    <div class="chart-tabs">
+      <div class="chart-tab active" data-period="day">日</div>
+      <div class="chart-tab" data-period="week">周</div>
+      <div class="chart-tab" data-period="month">月</div>
     </div>
+    <div id="chartContent"><div class="chart-empty">记录一些活动后，这里会显示时间分布</div></div>
   </div>
 
-  <div class="drag-hint">
-    <span>提示：</span>按住一个时间块并拖动，可批量选中多个时段统一记录
+  <div class="mode-bar">
+    <div class="mode-btn active" data-mode="click" id="modeClick">点击编辑</div>
+    <div class="mode-btn" data-mode="box" id="modeBox">框选批量</div>
+  </div>
+
+  <div class="selection-info" id="selectionInfo" style="display:none;">
+    <span id="selectionCount">已选 0 个时段</span>
+    <button id="fillSelected">填写</button>
+    <button id="clearSelection">取消</button>
+  </div>
+
+  <div class="color-legend" id="colorLegend">
+    <h3>颜色标签</h3>
+    <div class="color-legend-grid" id="colorLegendGrid"></div>
   </div>
 
   <div class="actions">
@@ -780,6 +318,8 @@
   <div class="time-blocks" id="timeBlocks"></div>
 </div>
 
+<div id="selectionBox"></div>
+
 <!-- Activity Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
@@ -801,9 +341,9 @@
   <div class="modal">
     <div class="login-icon">&#128274;</div>
     <h2>设置用户名</h2>
-    <p class="login-desc">输入一个用户名，用于在多台设备间同步数据。<br>在同一设备上输入相同的用户名即可看到相同的数据。</p>
+    <p class="login-desc">输入一个用户名，用于在多台设备间同步数据。</p>
     <input type="text" id="usernameInput" placeholder="输入用户名" maxlength="20" autocomplete="off">
-    <p class="login-hint">用户名区分大小写，仅限字母、数字和下划线</p>
+    <p class="login-hint">用户名仅限字母、数字和下划线</p>
     <button class="login-btn" id="loginBtn">开始使用</button>
   </div>
 </div>
@@ -811,14 +351,13 @@
 <div class="toast" id="toast"></div>
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
-  <div style="font-size:0.85rem;color:var(--text-light)">同步数据中...</div>
+  <div style="font-size:0.85rem;color:var(--text-light)">同步中...</div>
 </div>
 <input type="file" id="importInput" accept=".json">
 
-<script type="module">
-import { initializeApp } from "https://cdn.jsdelivr.net/npm/@firebase/app@0.10.5/+esm";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://cdn.jsdelivr.net/npm/@firebase/firestore@4.6.4/+esm";
-
+<script src="https://unpkg.com/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://unpkg.com/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBds0R-1ks9VZnO6iEUM-el94E77dzHEWU",
   authDomain: "time-tracker-a9acb.firebaseapp.com",
@@ -829,94 +368,61 @@ const firebaseConfig = {
   measurementId: "G-F531WV6NL4"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// Color labels for the legend
-const COLOR_LABELS = {
-  '#50c878': '工作',
-  '#4a6cf7': '交通',
-  '#9775fa': '娱乐',
-  '#ff6b6b': '学习',
-  '#ffd43b': '输出',
-  '#ffa94d': '生活',
-  '#f06595': '运动',
-  '#3bc9db': '休息',
-  '#69db7c': '阅读',
-  '#e599f7': '社交',
-  '#74c0fc': '其他',
-  '#ff8787': '饮食'
-};
+const COLORS = ['#50c878', '#4a6cf7', '#ff6b6b', '#9775fa', '#ffd43b', '#ffa94d', '#3bc9db'];
+const COLOR_LABELS = { '#50c878': '工作', '#4a6cf7': '交通', '#ff6b6b': '学习', '#9775fa': '娱乐', '#ffd43b': '输出', '#ffa94d': '生活', '#3bc9db': '休息' };
 
-const SLEEP_START = 2;
-const SLEEP_END = 8;
+const SLEEP_START = 2, SLEEP_END = 8;
 
 let currentDate = new Date();
 let dayData = {};
+let allCachedDays = {};
 let editingSlots = [];
 let isSleepExpanded = false;
 let currentUser = '';
 let unsubscribe = null;
+let chartPeriod = 'day'; // 'day', 'week', 'month'
 
-// Drag state
-let isDragging = false;
-let dragStartSlot = null;
-let dragSlots = new Set();
-let dragJustEnded = false;
-let dragStartPosition = null;
-const DRAG_THRESHOLD = 8; // pixels
+// Box selection state
+let selectMode = 'click'; // 'click' or 'box'
+let selectedSlots = new Set();
+let isBoxSelecting = false;
+let boxStartX = 0, boxStartY = 0;
 
 function getDateKey(date) { return date.toISOString().split('T')[0]; }
 
 function formatDate(date) {
   const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const w = weekdays[date.getDay()];
-  return `${y}-${m}-${d} ${w}`;
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${weekdays[date.getDay()]}`;
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
 function setSyncStatus(status, text) {
   const dot = document.getElementById('syncDot');
-  const txt = document.getElementById('syncText');
-  dot.className = 'sync-dot';
   dot.style.background = status === 'online' ? '#52c41a' : status === 'offline' ? '#faad14' : '#ff4d4f';
-  txt.textContent = text;
+  document.getElementById('syncText').textContent = text;
 }
 
-function showLoading(show) {
-  document.getElementById('loading').classList.toggle('active', show);
-}
-
+function showLoading(s) { document.getElementById('loading').classList.toggle('active', s); }
 function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function isValidUsername(name) { return /^[a-zA-Z0-9_]{1,20}$/.test(name); }
-
+function isValidUsername(n) { return /^[a-zA-Z0-9_]{1,20}$/.test(n); }
 function showLoginModal() {
   document.getElementById('loginModal').classList.add('active');
   setTimeout(() => document.getElementById('usernameInput').focus(), 150);
 }
-
 function hideLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
 
 function doLogin(username) {
   username = username.trim().toLowerCase();
-  if (!isValidUsername(username)) {
-    showToast('用户名只能包含字母、数字和下划线');
-    return;
-  }
+  if (!isValidUsername(username)) { showToast('用户名格式不正确'); return; }
   currentUser = username;
   localStorage.setItem('tt_username', username);
   document.getElementById('userName').textContent = username;
@@ -926,8 +432,7 @@ function doLogin(username) {
 
 function switchUser() {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  dayData = {};
-  currentUser = '';
+  dayData = {}; currentUser = '';
   localStorage.removeItem('tt_username');
   document.getElementById('userName').textContent = '未登录';
   setSyncStatus('offline', '未连接');
@@ -937,14 +442,21 @@ function switchUser() {
 
 function connectToFirebase(username) {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  const dataRef = doc(db, 'timeData', username);
+  const ref = db.collection('timeData').doc(username);
   setSyncStatus('online', '连接中...');
-  unsubscribe = onSnapshot(dataRef, (snap) => {
-    dayData = snap.exists() ? snap.data() : {};
+  unsubscribe = ref.onSnapshot((snap) => {
+    if (snap.exists) {
+      const allData = snap.data();
+      allCachedDays = allData;
+      dayData = allData[getDateKey(currentDate)] || {};
+    } else {
+      allCachedDays = {};
+      dayData = {};
+    }
     setSyncStatus('online', '已同步');
     renderAll();
-  }, (error) => {
-    console.error('Firebase error:', error);
+  }, (err) => {
+    console.error('Firebase error:', err);
     setSyncStatus('error', '同步失败');
     loadLocalData();
     renderAll();
@@ -952,424 +464,474 @@ function connectToFirebase(username) {
 }
 
 function loadLocalData() {
-  const stored = localStorage.getItem('timeTrackerData');
-  if (stored) {
-    try {
-      const allData = JSON.parse(stored);
-      dayData = allData[getDateKey(currentDate)] || {};
-    } catch (e) { dayData = {}; }
-  }
+  try {
+    const all = JSON.parse(localStorage.getItem('timeTrackerAllDays') || '{}');
+    allCachedDays = all;
+    dayData = all[getDateKey(currentDate)] || {};
+  } catch (e) { allCachedDays = {}; dayData = {}; }
+}
+
+async function fetchDaysForChart() {
+  // Data is already loaded via onSnapshot, just ensure we have it
+  // No additional fetch needed since all days are in the same document
+  return Promise.resolve();
 }
 
 async function saveToFirebase() {
   try {
-    await setDoc(doc(db, 'timeData', currentUser), dayData);
-    saveToLocal();
+    allCachedDays[getDateKey(currentDate)] = dayData;
+    await db.collection('timeData').doc(currentUser).set(allCachedDays);
+    localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
   } catch (e) {
-    console.error('Save error:', e);
-    saveToLocal();
-    showToast('云端保存失败，已存本地');
+    console.error(e);
+    showToast('云端保存失败');
   }
 }
 
-function saveToLocal() {
-  let allData = {};
-  const stored = localStorage.getItem('timeTrackerData');
-  if (stored) { try { allData = JSON.parse(stored); } catch (e) {} }
-  allData[getDateKey(currentDate)] = dayData;
-  localStorage.setItem('timeTrackerData', JSON.stringify(allData));
+function renderColorLegend() {
+  const grid = document.getElementById('colorLegendGrid');
+  grid.innerHTML = COLORS.map(c =>
+    `<div class="color-legend-item"><span class="color-legend-dot" style="background:${c}"></span><span class="color-legend-label">${COLOR_LABELS[c]}</span></div>`
+  ).join('');
 }
 
 function renderAll() {
   renderPieChart();
   renderSleepBlock();
   renderTimeBlocks();
+  renderColorLegend();
   updateStats();
-  setupDragListeners(document.getElementById('sleepActivities'));
 }
 
 // ===== PIE CHART =====
+function getDateRangeForPeriod() {
+  const now = new Date(currentDate);
+  let startDate, endDate;
+  if (chartPeriod === 'day') {
+    startDate = endDate = new Date(now);
+  } else if (chartPeriod === 'week') {
+    startDate = new Date(now);
+    startDate.setDate(now.getDate() - now.getDay() + 1);
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+  } else {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  }
+  return { startDate, endDate };
+}
+
+function getEntriesForDateRange(data) {
+  const entries = [];
+  for (let i = 0; i < 24; i++) {
+    if (data[i] && data[i].text) entries.push(data[i]);
+    if (data[i + '.5'] && data[i + '.5'].text) entries.push(data[i + '.5']);
+  }
+  return entries;
+}
+
 function renderPieChart() {
   const container = document.getElementById('chartContent');
-  const entries = [];
 
-  for (let i = 0; i < 24; i++) {
-    if (dayData[i] && dayData[i].text) entries.push(dayData[i]);
-    if (dayData[i + '.5'] && dayData[i + '.5'].text) entries.push(dayData[i + '.5']);
+  if (chartPeriod === 'day') {
+    renderSingleDayChart(dayData, container);
+  } else {
+    renderMultiDayChart(container);
   }
+}
 
-  if (entries.length === 0) {
+function renderSingleDayChart(data, container) {
+  const entries = getEntriesForDateRange(data);
+  if (!entries.length) {
+    const label = chartPeriod === 'day' ? '今日' : '';
     container.innerHTML = '<div class="chart-empty">记录一些活动后，这里会显示时间分布</div>';
     return;
   }
+  renderChartFromEntries(entries, container, '已记录');
+}
 
-  // Group by color
+async function renderMultiDayChart(container) {
+  if (currentUser) {
+    await fetchDaysForChart();
+  }
+
+  const { startDate, endDate } = getDateRangeForPeriod();
+  const allEntries = [];
+
+  const d = new Date(startDate);
+  while (d <= endDate) {
+    const key = d.toISOString().split('T')[0];
+    if (allCachedDays[key]) {
+      allEntries.push(...getEntriesForDateRange(allCachedDays[key]));
+    }
+    d.setDate(d.getDate() + 1);
+  }
+
+  if (!allEntries.length) {
+    container.innerHTML = '<div class="chart-empty">该时段暂无记录</div>';
+    return;
+  }
+  const label = chartPeriod === 'week' ? '本周' : '本月';
+  renderChartFromEntries(allEntries, container, label);
+}
+
+function renderChartFromEntries(entries, container, centerLabel) {
   const colorMap = {};
   entries.forEach(e => {
     const c = e.color || '#4a6cf7';
     if (!colorMap[c]) colorMap[c] = { count: 0, label: COLOR_LABELS[c] || '其他' };
     colorMap[c].count++;
   });
-
   const total = entries.length;
-  const recordedHours = (total * 0.5);
-
-  // Build legend HTML
+  const hours = (total * 0.5);
   let legendHTML = '';
-  const sorted = Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count);
-  sorted.forEach(([color, info]) => {
-    const hours = (info.count * 0.5);
+  Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count).forEach(([color, info]) => {
+    const h = info.count * 0.5;
     const pct = Math.round(info.count / total * 100);
-    legendHTML += `
-      <div class="legend-item">
-        <span class="legend-dot" style="background:${color}"></span>
-        <span class="legend-label">${info.label}</span>
-        <span class="legend-value">${hours % 1 === 0 ? hours : hours.toFixed(1)}h (${pct}%)</span>
-      </div>
-    `;
+    legendHTML += `<div class="legend-item"><span class="legend-dot" style="background:${color}"></span><span class="legend-label">${info.label}</span><span class="legend-value">${h%1===0?h:h.toFixed(1)}h (${pct}%)</span></div>`;
   });
-
-  container.innerHTML = `
-    <div class="chart-container">
-      <div class="chart-canvas-wrap">
-        <canvas id="pieCanvas" width="280" height="280"></canvas>
-        <div class="chart-center-text">
-          <div class="hours">${recordedHours % 1 === 0 ? recordedHours : recordedHours.toFixed(1)}h</div>
-          <div class="label">已记录</div>
-        </div>
-      </div>
-      <div class="chart-legend">${legendHTML}</div>
-    </div>
-  `;
-
-  // Draw pie chart
-  requestAnimationFrame(() => drawPieChart(sorted, total));
-}
-
-function drawPieChart(sorted, total) {
-  const canvas = document.getElementById('pieCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width;
-  const h = canvas.height;
-  const cx = w / 2;
-  const cy = h / 2;
-  const outerR = Math.min(cx, cy) - 4;
-  const innerR = outerR * 0.55;
-
-  ctx.clearRect(0, 0, w, h);
-
-  let startAngle = -Math.PI / 2;
-  const gap = 0.02;
-
-  sorted.forEach(([color, info]) => {
-    const sliceAngle = (info.count / total) * Math.PI * 2;
-    if (sliceAngle < 0.01) return;
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR, startAngle + gap / 2, startAngle + sliceAngle - gap / 2);
-    ctx.arc(cx, cy, innerR, startAngle + sliceAngle - gap / 2, startAngle + gap / 2, true);
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-
-    startAngle += sliceAngle;
+  container.innerHTML = `<div class="chart-container"><div class="chart-canvas-wrap"><canvas id="pieCanvas" width="280" height="280"></canvas><div class="chart-center-text"><div class="hours">${hours%1===0?hours:hours.toFixed(1)}h</div><div class="label">${centerLabel}</div></div></div><div class="chart-legend">${legendHTML}</div></div>`;
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById('pieCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cx = 140, cy = 140, outerR = 130, innerR = 72;
+    ctx.clearRect(0, 0, 280, 280);
+    let angle = -Math.PI / 2;
+    Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count).forEach(([color, info]) => {
+      const slice = (info.count / total) * Math.PI * 2;
+      if (slice < 0.01) return;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, angle + 0.01, angle + slice - 0.01);
+      ctx.arc(cx, cy, innerR, angle + slice - 0.01, angle + 0.01, true);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      angle += slice;
+    });
   });
 }
 
 // ===== SLEEP BLOCK =====
 function renderSleepBlock() {
   const block = document.getElementById('sleepBlock');
-  const activitiesDiv = document.getElementById('sleepActivities');
-  const toggle = block.querySelector('.sleep-toggle');
-
+  const div = document.getElementById('sleepActivities');
   block.classList.toggle('collapsed', !isSleepExpanded);
-  toggle.textContent = isSleepExpanded ? '收起' : '展开';
-
-  let filledCount = 0;
+  block.querySelector('.sleep-toggle').textContent = isSleepExpanded ? '收起' : '展开';
+  const total = (SLEEP_END - SLEEP_START) * 2;
+  const filled = total;
+  const label = block.querySelector('.sleep-label');
+  label.textContent = filled === 0 ? '睡眠时段 · 点击展开记录' : filled === total ? `睡眠时段 · 已全部记录 (${SLEEP_END-SLEEP_START}小时)` : `睡眠时段 · 已记录 ${filled}/${total}`;
+  div.innerHTML = '';
+  const SLEEP_COLOR = '#ffa94d';
   for (let i = SLEEP_START; i < SLEEP_END; i++) {
-    if (dayData[i] && dayData[i].text) filledCount++;
-    if (dayData[i + '.5'] && dayData[i + '.5'].text) filledCount++;
-  }
-
-  const sleepLabel = block.querySelector('.sleep-label');
-  const totalSlots = (SLEEP_END - SLEEP_START) * 2;
-  if (filledCount === 0) {
-    sleepLabel.textContent = '睡眠时段 · 点击展开记录';
-  } else if (filledCount === totalSlots) {
-    sleepLabel.textContent = `睡眠时段 · 已全部记录 (${SLEEP_END - SLEEP_START}小时)`;
-  } else {
-    sleepLabel.textContent = `睡眠时段 · 已记录 ${filledCount}/${totalSlots} 个时段`;
-  }
-
-  activitiesDiv.innerHTML = '';
-  for (let i = SLEEP_START; i < SLEEP_END; i++) {
-    [{ slot: i, label: `${String(i).padStart(2,'0')}:00`, activity: dayData[i] },
-     { slot: i + '.5', label: `${String(i).padStart(2,'0')}:30`, activity: dayData[i + '.5'] }
-    ].forEach(({ slot, label, activity }) => {
-      const hasContent = activity && activity.text;
-      const div = document.createElement('div');
-      div.className = 'time-block';
-      div.innerHTML = `
-        <div class="time-label">${label}</div>
-        <div class="time-content ${hasContent ? 'filled' : 'empty'}" data-slot="${slot}" style="${hasContent ? `--block-color:${activity.color};--block-bg:${activity.color}15` : ''}">
-          ${hasContent ? `<div class="activity"><span class="activity-text">${escapeHtml(activity.text)}</span>${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}<button class="edit-btn" data-slot="${slot}">&#9998;</button></div>` : ''}
-        </div>`;
-      activitiesDiv.appendChild(div);
+    [{ s: i, l: `${String(i).padStart(2,'0')}:00-${String(i).padStart(2,'0')}:30`, a: dayData[i] }, { s: i+'.5', l: `${String(i).padStart(2,'0')}:30-${String(i+1).padStart(2,'0')}:00`, a: dayData[i+'.5'] }].forEach(({ s, l, a }) => {
+      const has = a && a.text;
+      const color = has ? a.color : SLEEP_COLOR;
+      const bg = has ? `${a.color}15` : `${SLEEP_COLOR}15`;
+      const text = has ? escapeHtml(a.text) : COLOR_LABELS[SLEEP_COLOR];
+      const el = document.createElement('div');
+      el.className = 'time-block';
+      el.innerHTML = `<div class="time-label">${l}</div><div class="time-content filled" data-slot="${s}" style="--block-color:${color};--block-bg:${bg}" data-area="sleep"><div class="activity"><span class="activity-text">${text}</span>${has&&a.note?`<span class="activity-note">${escapeHtml(a.note)}</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div></div>`;
+      div.appendChild(el);
     });
   }
 }
 
 // ===== TIME BLOCKS =====
-function getSlotsInRange() {
-  const periods = [
-    { start: 8, end: 12 }, { start: 12, end: 18 },
-    { start: 18, end: 24 }, { start: 0, end: 2 }
-  ];
-  const slots = [];
-  periods.forEach(({ start, end }) => {
-    for (let i = start; i < end; i++) {
-      slots.push(i, i + '.5');
-    }
-  });
-  return slots;
-}
-
-function slotToIndex(slot) {
-  if (typeof slot === 'string' && slot.includes('.')) {
-    return parseInt(slot) * 2 + 1;
-  }
-  return parseInt(slot) * 2;
-}
-
-function renderTimeBlocks() {
-  const container = document.getElementById('timeBlocks');
-  container.innerHTML = '';
-
-  const periods = [
+function getPeriods() {
+  return [
     { label: '上午', start: 8, end: 12 },
     { label: '下午', start: 12, end: 18 },
     { label: '晚上', start: 18, end: 24 },
     { label: '凌晨', start: 0, end: 2 }
   ];
+}
 
-  periods.forEach(({ label, start, end }) => {
+function renderTimeBlocks() {
+  const container = document.getElementById('timeBlocks');
+  container.innerHTML = '';
+  getPeriods().forEach(({ label, start, end }) => {
     const header = document.createElement('div');
     header.className = 'period-label';
     header.textContent = label;
     container.appendChild(header);
-
     for (let i = start; i < end; i++) {
-      [{ slot: i, label: `${String(i).padStart(2,'0')}:00`, activity: dayData[i] },
-       { slot: i + '.5', label: `${String(i).padStart(2,'0')}:30`, activity: dayData[i + '.5'] }
-      ].forEach(({ slot, label, activity }) => {
-        const hasContent = activity && activity.text;
+      [{ s: i, l: `${String(i).padStart(2,'0')}:00-${String(i).padStart(2,'0')}:30`, a: dayData[i] }, { s: i+'.5', l: `${String(i).padStart(2,'0')}:30-${String(i+1).padStart(2,'0')}:00`, a: dayData[i+'.5'] }].forEach(({ s, l, a }) => {
+        const has = a && a.text;
         const block = document.createElement('div');
         block.className = 'time-block';
-        block.innerHTML = `
-          <div class="time-label">${label}</div>
-          <div class="time-content ${hasContent ? 'filled' : 'empty'}" data-slot="${slot}" style="${hasContent ? `--block-color:${activity.color};--block-bg:${activity.color}15` : ''}">
-            ${hasContent ? `<div class="activity"><span class="activity-text">${escapeHtml(activity.text)}</span>${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}<button class="edit-btn" data-slot="${slot}">&#9998;</button></div>` : ''}
-          </div>`;
+        const isSelectable = selectMode === 'box' ? ' selectable' : '';
+        const isSelected = selectedSlots.has(s) ? ' selected' : '';
+        block.innerHTML = `<div class="time-label">${l}</div><div class="time-content ${has?'filled':'empty'}${isSelectable}${isSelected}" data-slot="${s}" data-area="main" style="${has?`--block-color:${a.color};--block-bg:${a.color}15`:''}">${has?`<div class="activity">${selectMode==='box'?`<span class="check-btn" data-slot="${s}">${selectedSlots.has(s)?'✓':'○'}</span>`:''}<span class="activity-text">${escapeHtml(a.text)}</span>${a.note?`<span class="activity-note">${escapeHtml(a.note)}</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div>`:''}</div>`;
         container.appendChild(block);
       });
     }
   });
-
-  setupDragListeners(container);
-}
-
-function setupDragListeners(container) {
-  const contents = container.querySelectorAll('.time-content');
-
-  contents.forEach(el => {
-    el.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.edit-btn')) return;
-      dragStartPosition = { x: e.clientX, y: e.clientY };
-      dragStartSlot = el.dataset.slot;
-    });
-
-    el.addEventListener('touchstart', (e) => {
-      if (e.target.closest('.edit-btn')) return;
-      const t = e.touches[0];
-      dragStartPosition = { x: t.clientX, y: t.clientY };
-      dragStartSlot = el.dataset.slot;
-    }, { passive: true });
-  });
-
-  // Mouse move tracking for desktop drag
-  document.addEventListener('mousemove', (e) => {
-    if (!dragStartPosition || !dragStartSlot) return;
-    const dx = e.clientX - dragStartPosition.x;
-    const dy = e.clientY - dragStartPosition.y;
-    if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
-
-    if (!isDragging) {
-      if (!currentUser) {
-        showToast('请先登录');
-        showLoginModal();
-        dragStartPosition = null;
-        dragStartSlot = null;
-        return;
-      }
-      isDragging = true;
-      dragSlots = new Set([dragStartSlot]);
-      highlightDragSlots();
-    }
-
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    if (el) {
-      const content = el.closest('.time-content');
-      if (content) updateDragSelection(content.dataset.slot);
-    }
-  });
-
-  // Touch move tracking for mobile drag
-  document.addEventListener('touchmove', (e) => {
-    if (!dragStartPosition || !dragStartSlot) return;
-    const t = e.touches[0];
-    const dx = t.clientX - dragStartPosition.x;
-    const dy = t.clientY - dragStartPosition.y;
-    if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
-
-    if (!isDragging) {
-      if (!currentUser) {
-        showToast('请先登录');
-        showLoginModal();
-        dragStartPosition = null;
-        dragStartSlot = null;
-        return;
-      }
-      isDragging = true;
-      dragSlots = new Set([dragStartSlot]);
-      highlightDragSlots();
-    }
-
-    const el = document.elementFromPoint(t.clientX, t.clientY);
-    if (el) {
-      const content = el.closest('.time-content');
-      if (content) updateDragSelection(content.dataset.slot);
-    }
-  }, { passive: true });
-
-  document.addEventListener('mouseup', endDrag);
-  document.addEventListener('touchend', endDrag);
-}
-
-function updateDragSelection(currentSlot) {
-  if (!isDragging || !dragStartSlot) return;
-
-  const allSlots = getSlotsInRange();
-  const startIdx = allSlots.indexOf(dragStartSlot);
-  const currentIdx = allSlots.indexOf(currentSlot);
-
-  if (startIdx === -1 || currentIdx === -1) return;
-
-  const minIdx = Math.min(startIdx, currentIdx);
-  const maxIdx = Math.max(startIdx, currentIdx);
-
-  dragSlots = new Set();
-  for (let i = minIdx; i <= maxIdx; i++) {
-    dragSlots.add(allSlots[i]);
-  }
-
-  highlightDragSlots();
-}
-
-function highlightDragSlots() {
-  document.querySelectorAll('.time-content').forEach(el => {
-    el.classList.toggle('dragging-over', dragSlots.has(el.dataset.slot));
-  });
-}
-
-function endDrag() {
-  const wasDragging = isDragging;
-  isDragging = false;
-
-  if (wasDragging) {
-    dragJustEnded = true;
-    document.querySelectorAll('.dragging-over').forEach(el => el.classList.remove('dragging-over'));
-
-    if (dragSlots.size > 0) {
-      editingSlots = [...dragSlots];
-      openModalForSlots(editingSlots);
-    }
-
-    setTimeout(() => { dragJustEnded = false; }, 100);
-  }
-
-  dragStartPosition = null;
-  dragStartSlot = null;
-  dragSlots = new Set();
 }
 
 function updateStats() {
-  let filledCount = 0;
+  let filled = 0;
   for (let i = 0; i < 24; i++) {
-    if (dayData[i] && dayData[i].text) filledCount++;
-    if (dayData[i + '.5'] && dayData[i + '.5'].text) filledCount++;
+    if (dayData[i] && dayData[i].text) filled++;
+    if (dayData[i + '.5'] && dayData[i + '.5'].text) filled++;
   }
-  const recordedHours = filledCount * 0.5;
-  document.getElementById('statRecorded').textContent = recordedHours % 1 === 0 ? `${recordedHours}h` : `${recordedHours.toFixed(1)}h`;
-  document.getElementById('statEmpty').textContent = `${(24 - recordedHours) % 1 === 0 ? (24 - recordedHours) : (24 - recordedHours).toFixed(1)}h`;
-  document.getElementById('statActivities').textContent = filledCount;
+  const h = filled * 0.5;
+  document.getElementById('statRecorded').textContent = h%1===0?`${h}h`:`${h.toFixed(1)}h`;
+  document.getElementById('statEmpty').textContent = `${((24-h)%1===0?(24-h):(24-h).toFixed(1))}h`;
+  document.getElementById('statActivities').textContent = filled;
 }
 
-function formatSlotTime(slot) {
-  let hour, minute;
-  if (typeof slot === 'string' && slot.includes('.')) {
-    hour = parseInt(slot.split('.')[0]);
-    minute = 30;
+// ===== MODE SWITCHING =====
+document.getElementById('modeClick').addEventListener('click', () => {
+  selectMode = 'click';
+  document.getElementById('modeClick').classList.add('active');
+  document.getElementById('modeBox').classList.remove('active');
+  clearSelection();
+  renderTimeBlocks();
+});
+
+document.getElementById('modeBox').addEventListener('click', () => {
+  selectMode = 'box';
+  document.getElementById('modeBox').classList.add('active');
+  document.getElementById('modeClick').classList.remove('active');
+  renderTimeBlocks();
+});
+
+// ===== CHART PERIOD SWITCHING =====
+document.querySelectorAll('.chart-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    chartPeriod = tab.dataset.period;
+    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    if (chartPeriod !== 'day' && currentUser) {
+      fetchDaysForChart().then(() => renderPieChart());
+    } else {
+      renderPieChart();
+    }
+  });
+});
+
+// ===== BOX SELECTION =====
+function clearSelection() {
+  selectedSlots = new Set();
+  document.getElementById('selectionInfo').classList.remove('visible');
+}
+
+function updateSelectionUI() {
+  const info = document.getElementById('selectionInfo');
+  const count = selectedSlots.size;
+  if (count > 0) {
+    document.getElementById('selectionCount').textContent = `已选 ${count} 个时段`;
+    info.classList.add('visible');
   } else {
-    hour = parseInt(slot);
-    minute = 0;
+    info.classList.remove('visible');
   }
-  return `${String(hour).padStart(2, '0')}:${String(minute).toString().padStart(2, '0')}`;
+}
+
+function getSelectableElements() {
+  return document.querySelectorAll('.time-content.selectable');
+}
+
+function isElementInBox(el, x1, y1, x2, y2) {
+  const rect = el.getBoundingClientRect();
+  const elCenterX = rect.left + rect.width / 2;
+  const elCenterY = rect.top + rect.height / 2;
+  const bx1 = Math.min(x1, x2), bx2 = Math.max(x1, x2);
+  const by1 = Math.min(y1, y2), by2 = Math.max(y1, y2);
+  return elCenterX >= bx1 && elCenterX <= bx2 && elCenterY >= by1 && elCenterY <= by2;
+}
+
+function updateSelectedFromBox(x1, y1, x2, y2) {
+  selectedSlots = new Set();
+  getSelectableElements().forEach(el => {
+    if (isElementInBox(el, x1, y1, x2, y2)) {
+      selectedSlots.add(el.dataset.slot);
+    }
+  });
+  if (selectedSlots.size === 0) return;
+  editingSlots = [...selectedSlots];
+  openModalForSlots(editingSlots);
+}
+
+// Box selection on main time blocks
+const timeBlocksContainer = document.getElementById('timeBlocks');
+
+timeBlocksContainer.addEventListener('mousedown', (e) => {
+  if (selectMode !== 'box') return;
+  if (e.target.closest('.edit-btn')) return;
+  const content = e.target.closest('.time-content.selectable');
+  if (!content) return;
+  e.preventDefault();
+  isBoxSelecting = true;
+  boxStartX = e.clientX;
+  boxStartY = e.clientY;
+  const box = document.getElementById('selectionBox');
+  box.style.display = 'block';
+  box.style.left = boxStartX + 'px';
+  box.style.top = boxStartY + 'px';
+  box.style.width = '0px';
+  box.style.height = '0px';
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isBoxSelecting) return;
+  const box = document.getElementById('selectionBox');
+  const x = Math.min(boxStartX, e.clientX);
+  const y = Math.min(boxStartY, e.clientY);
+  const w = Math.abs(e.clientX - boxStartX);
+  const h = Math.abs(e.clientY - boxStartY);
+  box.style.left = x + 'px';
+  box.style.top = y + 'px';
+  box.style.width = w + 'px';
+  box.style.height = h + 'px';
+});
+
+document.addEventListener('mouseup', (e) => {
+  if (!isBoxSelecting) return;
+  isBoxSelecting = false;
+  document.getElementById('selectionBox').style.display = 'none';
+  updateSelectedFromBox(boxStartX, boxStartY, e.clientX, e.clientY);
+});
+
+// Touch box selection
+timeBlocksContainer.addEventListener('touchstart', (e) => {
+  if (selectMode !== 'box') return;
+  if (e.target.closest('.edit-btn')) return;
+  const content = e.target.closest('.time-content.selectable');
+  if (!content) return;
+  const t = e.touches[0];
+  isBoxSelecting = true;
+  boxStartX = t.clientX;
+  boxStartY = t.clientY;
+  const box = document.getElementById('selectionBox');
+  box.style.display = 'block';
+  box.style.left = boxStartX + 'px';
+  box.style.top = boxStartY + 'px';
+  box.style.width = '0px';
+  box.style.height = '0px';
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+  if (!isBoxSelecting) return;
+  const t = e.touches[0];
+  const box = document.getElementById('selectionBox');
+  const x = Math.min(boxStartX, t.clientX);
+  const y = Math.min(boxStartY, t.clientY);
+  const w = Math.abs(t.clientX - boxStartX);
+  const h = Math.abs(t.clientY - boxStartY);
+  box.style.left = x + 'px';
+  box.style.top = y + 'px';
+  box.style.width = w + 'px';
+  box.style.height = h + 'px';
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  if (!isBoxSelecting) return;
+  isBoxSelecting = false;
+  document.getElementById('selectionBox').style.display = 'none';
+  const t = e.changedTouches[0];
+  updateSelectedFromBox(boxStartX, boxStartY, t.clientX, t.clientY);
+});
+
+// Selection info buttons
+document.getElementById('clearSelection').addEventListener('click', clearSelection);
+
+document.getElementById('fillSelected').addEventListener('click', () => {
+  if (selectedSlots.size === 0) return;
+  editingSlots = [...selectedSlots];
+  openModalForSlots(editingSlots);
+});
+
+// ===== CLICK TO EDIT =====
+timeBlocksContainer.addEventListener('click', (e) => {
+  if (selectMode === 'box') {
+    // In box mode, clicking edit button still works
+    const editBtn = e.target.closest('.edit-btn');
+    if (editBtn) {
+      editingSlots = [editBtn.dataset.slot];
+      openModalForSlots(editingSlots);
+    }
+    return;
+  }
+  const editBtn = e.target.closest('.edit-btn');
+  if (editBtn) {
+    editingSlots = [editBtn.dataset.slot];
+    openModalForSlots(editingSlots);
+    return;
+  }
+  const content = e.target.closest('.time-content');
+  if (content) {
+    editingSlots = [content.dataset.slot];
+    openModalForSlots(editingSlots);
+  }
+});
+
+// Sleep activities click
+document.getElementById('sleepActivities').addEventListener('click', (e) => {
+  const editBtn = e.target.closest('.edit-btn');
+  if (editBtn) {
+    editingSlots = [editBtn.dataset.slot];
+    openModalForSlots(editingSlots);
+    return;
+  }
+  if (selectMode === 'click') {
+    const content = e.target.closest('.time-content');
+    if (content) {
+      editingSlots = [content.dataset.slot];
+      openModalForSlots(editingSlots);
+    }
+  }
+});
+
+// Sleep block toggle
+document.getElementById('sleepHeader').addEventListener('click', (e) => {
+  if (e.target.closest('.edit-btn') || e.target.closest('.time-content')) return;
+  isSleepExpanded = !isSleepExpanded;
+  renderSleepBlock();
+});
+
+// ===== MODAL =====
+function formatSlotTime(slot) {
+  let h, m;
+  if (typeof slot === 'string' && slot.includes('.')) { h = parseInt(slot); m = 30; }
+  else { h = parseInt(slot); m = 0; }
+  return `${String(h).padStart(2,'0')}:${String(m).toString().padStart(2,'0')}`;
 }
 
 function openModalForSlots(slots) {
+  if (!currentUser) { showToast('请先登录'); showLoginModal(); return; }
   editingSlots = slots;
-
-  const sorted = [...slots].sort((a, b) => slotToIndex(a) - slotToIndex(b));
-  const startTime = formatSlotTime(sorted[0]);
-
-  const lastSlot = sorted[sorted.length - 1];
-  let endHour, endMinute;
-  if (typeof lastSlot === 'string' && lastSlot.includes('.')) {
-    endHour = parseInt(lastSlot.split('.')[0]);
-    endMinute = 30;
-  } else {
-    endHour = parseInt(lastSlot);
-    endMinute = 0;
-  }
-  const nextMinute = endMinute === 0 ? 30 : 0;
-  const nextHour = endMinute === 0 ? endHour : endHour + 1;
-  const endTime = `${String(nextHour).padStart(2, '0')}:${String(nextMinute).toString().padStart(2, '0')}`;
+  const sorted = [...slots].sort((a, b) => {
+    const ai = typeof a === 'string' && a.includes('.') ? parseInt(a) * 2 + 1 : parseInt(a) * 2;
+    const bi = typeof b === 'string' && b.includes('.') ? parseInt(b) * 2 + 1 : parseInt(b) * 2;
+    return ai - bi;
+  });
+  const start = formatSlotTime(sorted[0]);
+  const last = sorted[sorted.length - 1];
+  let eh, em;
+  if (typeof last === 'string' && last.includes('.')) { eh = parseInt(last); em = 30; }
+  else { eh = parseInt(last); em = 0; }
+  const end = `${String(em===0?eh:eh+1).padStart(2,'0')}:${String(em===0?30:0).toString().padStart(2,'0')}`;
 
   document.getElementById('modalTitle').textContent = slots.length > 1 ? `批量编辑 (${slots.length}个时段)` : '编辑时间块';
-  document.getElementById('timeHint').textContent = `${startTime} - ${endTime}`;
+  document.getElementById('timeHint').textContent = `${start} - ${end}`;
 
-  // Pre-fill with first slot's data if exists
-  const firstActivity = dayData[sorted[0]];
-  document.getElementById('activityInput').value = firstActivity ? firstActivity.text : '';
-  document.getElementById('noteInput').value = firstActivity ? (firstActivity.note || '') : '';
-  document.getElementById('deleteBtn').style.display = slots.length === 1 && firstActivity && firstActivity.text ? 'block' : 'none';
+  const first = dayData[sorted[0]];
+  document.getElementById('activityInput').value = first ? first.text : '';
+  document.getElementById('noteInput').value = first ? (first.note || '') : '';
+  document.getElementById('deleteBtn').style.display = slots.length === 1 && first && first.text ? 'block' : 'none';
 
-  renderColorPicker(firstActivity ? firstActivity.color : null);
+  renderColorPicker(first ? first.color : null);
   document.getElementById('modal').classList.add('active');
-  setTimeout(() => {
-    const input = document.getElementById('activityInput');
-    input.focus();
-    input.select();
-  }, 150);
+  setTimeout(() => { const inp = document.getElementById('activityInput'); inp.focus(); }, 150);
 }
 
 function renderColorPicker(selected) {
   const picker = document.getElementById('colorPicker');
   picker.innerHTML = COLORS.map(c =>
-    `<div class="color-option ${c === selected ? 'selected' : ''}" style="background:${c}" data-color="${c}" title="${COLOR_LABELS[c] || ''}"></div>`
+    `<div class="color-option ${c===selected?'selected':''}" style="background:${c}" data-color="${c}" title="${COLOR_LABELS[c]||''}"></div>`
   ).join('');
-
   picker.querySelectorAll('.color-option').forEach(el => {
     el.addEventListener('click', () => {
       picker.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
@@ -1386,28 +948,22 @@ function closeModal() {
 function saveActivity() {
   const text = document.getElementById('activityInput').value.trim();
   const note = document.getElementById('noteInput').value.trim();
-  const selectedColor = document.querySelector('#colorPicker .color-option.selected');
-  const color = selectedColor ? selectedColor.dataset.color : '#4a6cf7';
-
-  if (!text) {
-    showToast('请输入活动内容');
-    return;
-  }
-
-  editingSlots.forEach(slot => {
-    dayData[slot] = { text, note, color };
-  });
-
+  const sel = document.querySelector('#colorPicker .color-option.selected');
+  const color = sel ? sel.dataset.color : '#4a6cf7';
+  if (!text) { showToast('请输入活动内容'); return; }
+  editingSlots.forEach(s => { dayData[s] = { text, note, color }; });
   showLoading(true);
   saveToFirebase().then(() => {
     showLoading(false);
     renderAll();
     closeModal();
+    clearSelection();
     showToast(`已保存 ${editingSlots.length} 个时段`);
   }).catch(() => {
     showLoading(false);
     renderAll();
     closeModal();
+    clearSelection();
     showToast('已保存');
   });
 }
@@ -1420,6 +976,7 @@ function deleteActivity() {
     showLoading(false);
     renderAll();
     closeModal();
+    clearSelection();
     showToast('已删除');
   }).catch(() => {
     showLoading(false);
@@ -1429,147 +986,84 @@ function deleteActivity() {
   });
 }
 
-function exportData() {
-  const blob = new Blob([JSON.stringify(dayData, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `time-tracker-${getDateKey(currentDate)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('已导出');
-}
-
-function importData(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const imported = JSON.parse(e.target.result);
-      dayData = { ...dayData, ...imported };
-      saveToFirebase();
-      renderAll();
-      showToast('导入成功');
-    } catch (err) {
-      showToast('导入失败：文件格式错误');
-    }
-  };
-  reader.readAsText(file);
-}
-
-function clearToday() {
-  if (!currentUser) { showToast('请先登录'); return; }
-  if (confirm('确定要清空今天的所有记录吗？')) {
-    dayData = {};
-    showLoading(true);
-    saveToFirebase().then(() => {
-      showLoading(false);
-      renderAll();
-      showToast('已清空');
-    }).catch(() => {
-      showLoading(false);
-      renderAll();
-      showToast('已清空');
-    });
-  }
-}
-
-// Sleep block toggle
-document.getElementById('sleepHeader').addEventListener('click', (e) => {
-  if (e.target.closest('.edit-btn') || e.target.closest('.time-content')) return;
-  isSleepExpanded = !isSleepExpanded;
-  renderSleepBlock();
-});
-
-// Click handlers for sleep activities
-document.getElementById('sleepActivities').addEventListener('click', (e) => {
-  if (dragJustEnded) return;
-  const editBtn = e.target.closest('.edit-btn');
-  if (editBtn) {
-    e.stopPropagation();
-    editingSlots = [editBtn.dataset.slot];
-    openModalForSlots(editingSlots);
-    return;
-  }
-  const content = e.target.closest('.time-content');
-  if (content) {
-    editingSlots = [content.dataset.slot];
-    openModalForSlots(editingSlots);
-  }
-});
-
-// Click handlers for time blocks
-document.getElementById('timeBlocks').addEventListener('click', (e) => {
-  if (dragJustEnded) return;
-  const editBtn = e.target.closest('.edit-btn');
-  if (editBtn) {
-    e.stopPropagation();
-    editingSlots = [editBtn.dataset.slot];
-    openModalForSlots(editingSlots);
-    return;
-  }
-  const content = e.target.closest('.time-content');
-  if (content) {
-    editingSlots = [content.dataset.slot];
-    openModalForSlots(editingSlots);
-  }
-});
-
 // Date navigation
+function switchToDate(date) {
+  currentDate = new Date(date);
+  document.getElementById('currentDate').textContent = formatDate(currentDate);
+  const key = getDateKey(currentDate);
+  dayData = allCachedDays[key] || {};
+  renderAll();
+}
+
 document.getElementById('prevDay').addEventListener('click', () => {
-  currentDate.setDate(currentDate.getDate() - 1);
-  document.getElementById('currentDate').textContent = formatDate(currentDate);
-  renderAll();
+  const d = new Date(currentDate);
+  d.setDate(d.getDate() - 1);
+  switchToDate(d);
 });
-
 document.getElementById('nextDay').addEventListener('click', () => {
-  currentDate.setDate(currentDate.getDate() + 1);
-  document.getElementById('currentDate').textContent = formatDate(currentDate);
-  renderAll();
+  const d = new Date(currentDate);
+  d.setDate(d.getDate() + 1);
+  switchToDate(d);
 });
-
 document.getElementById('todayBtn').addEventListener('click', () => {
-  currentDate = new Date();
-  document.getElementById('currentDate').textContent = formatDate(currentDate);
-  renderAll();
+  switchToDate(new Date());
 });
 
 // Modal buttons
 document.getElementById('saveBtn').addEventListener('click', saveActivity);
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
 document.getElementById('deleteBtn').addEventListener('click', deleteActivity);
-document.getElementById('exportBtn').addEventListener('click', exportData);
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(dayData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `time-${getDateKey(currentDate)}.json`;
+  a.click();
+  showToast('已导出');
+});
 document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importInput').click());
 document.getElementById('importInput').addEventListener('change', (e) => {
-  if (e.target.files[0]) importData(e.target.files[0]);
+  if (!e.target.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      dayData = { ...dayData, ...JSON.parse(ev.target.result) };
+      saveToFirebase();
+      renderAll();
+      showToast('导入成功');
+    } catch (err) { showToast('导入失败'); }
+  };
+  reader.readAsText(e.target.files[0]);
 });
-document.getElementById('clearBtn').addEventListener('click', clearToday);
-
-document.getElementById('modal').addEventListener('click', (e) => {
-  if (e.target.id === 'modal') closeModal();
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (!currentUser) { showToast('请先登录'); return; }
+  if (confirm('确定清空今天的所有记录？')) {
+    dayData = {};
+    showLoading(true);
+    saveToFirebase().then(() => { showLoading(false); renderAll(); showToast('已清空'); });
+  }
 });
 
-// Login modal
+document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+
+// Login
 document.getElementById('loginBtn').addEventListener('click', () => doLogin(document.getElementById('usernameInput').value));
-document.getElementById('usernameInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') doLogin(e.target.value);
-});
-
+document.getElementById('usernameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(e.target.value); });
 document.getElementById('userName').addEventListener('click', switchUser);
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeModal(); hideLoginModal(); }
-  if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active')) {
-    if (e.target.tagName !== 'TEXTAREA') saveActivity();
-  }
+  if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active') && e.target.tagName !== 'TEXTAREA') saveActivity();
 });
 
 // Init
 document.getElementById('currentDate').textContent = formatDate(currentDate);
-const savedUser = localStorage.getItem('tt_username');
-if (savedUser && isValidUsername(savedUser)) {
-  currentUser = savedUser;
-  document.getElementById('userName').textContent = savedUser;
-  connectToFirebase(savedUser);
+renderColorLegend();
+const saved = localStorage.getItem('tt_username');
+if (saved && isValidUsername(saved)) {
+  currentUser = saved;
+  document.getElementById('userName').textContent = saved;
+  connectToFirebase(saved);
 } else {
   showLoginModal();
 }
