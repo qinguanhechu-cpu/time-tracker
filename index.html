@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f0f2f5">
 <title>时间块记录</title>
 <style>
   :root {
@@ -30,6 +31,23 @@
     color: var(--text);
     line-height: 1.5;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* 防止移动端点击出现蓝色高亮 */
+  a, button, input, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* 触摸反馈 */
+  @media (hover: none) {
+    .time-block:active { background: var(--hover); }
+    .actions button:active { opacity: 0.85; transform: scale(0.98); }
+    .chart-tab:active { transform: scale(0.97); }
+    .mode-btn:active { transform: scale(0.98); }
   }
 
   .container { max-width: 680px; margin: 0 auto; padding: 16px; }
@@ -243,23 +261,107 @@
   .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  @media (max-width: 500px) {
+  @media (max-width: 600px) {
+    /* 整体布局 */
     .container { padding: 12px; }
+    h1 { font-size: 1.25rem; }
+    header { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+    .user-bar { font-size: 0.85rem; }
+    .user-name { font-size: 0.85rem; padding: 4px 8px; }
+
+    /* 日期导航 */
+    .date-nav { width: 100%; justify-content: center; padding: 6px; }
+    .date-nav button { padding: 8px 14px; font-size: 0.95rem; }
+    .date-nav .current-date { font-size: 0.9rem; min-width: 120px; }
+
+    /* 统计卡片 */
+    .stats { gap: 8px; margin-bottom: 12px; }
+    .stat-card { padding: 14px 10px; }
+    .stat-card .label { font-size: 0.8rem; }
+    .stat-card .value { font-size: 1.4rem; }
+
+    /* 图表区域 */
+    .chart-card { padding: 14px 12px; margin-bottom: 12px; }
+    .chart-card h3 { font-size: 0.8rem; }
+    .chart-tabs { gap: 8px; }
+    .chart-tab { padding: 8px; font-size: 0.85rem; }
+    .chart-hint { font-size: 0.8rem; }
+    .chart-container { flex-direction: column; gap: 12px; }
+    .chart-canvas-wrap { width: 160px; height: 160px; }
+    .chart-center-text .hours { font-size: 1.2rem; }
+    .chart-center-text .label { font-size: 0.75rem; }
+    .chart-legend { min-width: 100%; }
+    .legend-item { font-size: 0.9rem; padding: 4px 0; }
+    .legend-dot { width: 12px; height: 12px; }
+    .legend-value { font-size: 0.85rem; }
+
+    /* 操作按钮 */
+    .actions { gap: 10px; margin-bottom: 12px; }
+    .actions button { padding: 12px 10px; font-size: 0.9rem; min-height: 44px; }
+
+    /* 选择信息栏 */
+    .selection-info { padding: 12px 14px; font-size: 0.9rem; margin-bottom: 10px; }
+    .selection-info button { padding: 6px 14px; font-size: 0.85rem; min-height: 36px; }
+
+    /* 颜色图例 */
+    .color-legend { padding: 12px 14px; margin-bottom: 12px; }
+    .color-legend h3 { font-size: 0.8rem; margin-bottom: 8px; }
+    .color-legend-grid { gap: 12px; }
+    .color-legend-item { font-size: 0.9rem; gap: 8px; }
+    .color-legend-dot { width: 14px; height: 14px; }
+
+    /* 睡眠区块 */
+    .sleep-block { margin-bottom: 12px; }
+    .sleep-header { padding: 14px; gap: 10px; }
+    .sleep-icon { width: 44px; height: 44px; font-size: 1.5rem; }
+    .sleep-info .time-range { font-size: 0.95rem; }
+    .sleep-info .sleep-label { font-size: 0.85rem; }
+    .sleep-toggle { padding: 6px 12px; font-size: 0.85rem; }
+
+    /* 时间块 - 关键触摸区域优化 */
+    .period-label { padding: 12px 14px; font-size: 0.85rem; }
+    .time-block { min-height: 50px; }
+    .time-label {
+      width: 76px;
+      padding: 12px 8px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .time-content {
+      padding: 12px 14px;
+      min-height: 50px;
+    }
+    .time-content .activity-text { font-size: 0.9rem; }
+    .time-content .activity-note { font-size: 0.8rem; }
+    .time-content .edit-btn { padding: 6px 8px; font-size: 0.85rem; }
+    .time-content.empty::after { font-size: 1.3rem; }
+
+    /* 弹窗 */
+    .modal { padding: 20px; max-width: 90%; }
+    .modal h2 { font-size: 1.1rem; }
+    .modal .time-hint { font-size: 0.85rem; }
+    .modal input, .modal textarea { padding: 12px 14px; font-size: 1rem; }
+    .modal-actions button { padding: 10px 18px; font-size: 0.9rem; min-height: 44px; }
+    .modal .color-option { width: 32px; height: 32px; }
+
+    /* 登录弹窗 */
+    .login-modal .modal { max-width: 90%; }
+    .login-modal .login-icon { font-size: 2.8rem; }
+    .login-modal .login-desc { font-size: 0.9rem; }
+    .login-modal input { font-size: 1.1rem; padding: 12px; }
+    .login-modal .login-hint { font-size: 0.85rem; }
+    .login-modal .login-btn { padding: 14px; font-size: 1.05rem; min-height: 48px; }
+  }
+
+  /* 超小屏幕进一步优化 */
+  @media (max-width: 380px) {
+    .container { padding: 10px; }
     h1 { font-size: 1.15rem; }
-    header { flex-direction: column; align-items: flex-start; gap: 8px; }
-    .date-nav { width: 100%; justify-content: center; }
-    .stats { gap: 8px; }
-    .stat-card { padding: 10px 8px; }
-    .stat-card .value { font-size: 1.1rem; }
-    .actions button { padding: 9px 8px; font-size: 0.75rem; }
-    .time-label { width: 72px; font-size: 0.7rem; padding: 8px 6px; white-space: nowrap; }
-    .time-content { padding: 8px 10px; min-height: 40px; }
-    .time-content .activity-text { font-size: 0.8rem; }
-    .sleep-header { padding: 12px 14px; }
-    .chart-container { flex-direction: column; }
-    .chart-canvas-wrap { width: 120px; height: 120px; }
-    .color-legend-grid { gap: 8px; }
-    .color-legend-item { font-size: 0.75rem; }
+    .time-label { width: 68px; font-size: 0.8rem; padding: 10px 6px; }
+    .time-content { padding: 10px 12px; min-height: 48px; }
+    .time-content .activity-text { font-size: 0.85rem; }
+    .stat-card .value { font-size: 1.2rem; }
+    .chart-canvas-wrap { width: 140px; height: 140px; }
   }
 </style>
 </head>
