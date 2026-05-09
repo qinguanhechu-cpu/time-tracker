@@ -58,6 +58,7 @@
   .chart-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
   .chart-tab { flex: 1; padding: 6px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--card-bg); cursor: pointer; font-size: 0.75rem; font-weight: 500; text-align: center; transition: all 0.15s; color: var(--text-light); }
   .chart-tab.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+  .chart-hint { font-size: 0.7rem; color: var(--text-light); text-align: center; margin-top: 10px; opacity: 0.7; }
   .chart-container { display: flex; align-items: center; gap: 16px; justify-content: center; flex-wrap: wrap; }
   .chart-canvas-wrap { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
   .chart-canvas-wrap canvas { width: 100%; height: 100%; }
@@ -279,11 +280,7 @@
       <div class="chart-tab" data-period="month">月</div>
     </div>
     <div id="chartContent"><div class="chart-empty">记录一些活动后，这里会显示时间分布</div></div>
-  </div>
-
-  <div class="mode-bar">
-    <div class="mode-btn active" data-mode="click" id="modeClick">点击编辑</div>
-    <div class="mode-btn" data-mode="box" id="modeBox">框选批量</div>
+    <div class="chart-hint">长按时段可框选多个时段批量编辑</div>
   </div>
 
   <div class="selection-info" id="selectionInfo" style="display:none;">
@@ -385,11 +382,13 @@ let currentUser = '';
 let unsubscribe = null;
 let chartPeriod = 'day'; // 'day', 'week', 'month'
 
-// Box selection state
-let selectMode = 'click'; // 'click' or 'box'
+// Long-press to box-select state
 let selectedSlots = new Set();
 let isBoxSelecting = false;
 let boxStartX = 0, boxStartY = 0;
+let longPressTimer = null;
+let longPressTriggered = false;
+const LONG_PRESS_DELAY = 300;
 
 function getDateKey(date) { return date.toISOString().split('T')[0]; }
 
@@ -623,7 +622,7 @@ function renderSleepBlock() {
   const label = block.querySelector('.sleep-label');
   label.textContent = filled === 0 ? '睡眠时段 · 点击展开记录' : filled === total ? `睡眠时段 · 已全部记录 (${SLEEP_END-SLEEP_START}小时)` : `睡眠时段 · 已记录 ${filled}/${total}`;
   div.innerHTML = '';
-  const SLEEP_COLOR = '#ffa94d';
+  const SLEEP_COLOR = '#3bc9db';
   for (let i = SLEEP_START; i < SLEEP_END; i++) {
     [{ s: i, l: `${String(i).padStart(2,'0')}:00-${String(i).padStart(2,'0')}:30`, a: dayData[i] }, { s: i+'.5', l: `${String(i).padStart(2,'0')}:30-${String(i+1).padStart(2,'0')}:00`, a: dayData[i+'.5'] }].forEach(({ s, l, a }) => {
       const has = a && a.text;
@@ -661,14 +660,22 @@ function renderTimeBlocks() {
         const has = a && a.text;
         const block = document.createElement('div');
         block.className = 'time-block';
-        const isSelectable = selectMode === 'box' ? ' selectable' : '';
-        const isSelected = selectedSlots.has(s) ? ' selected' : '';
-        block.innerHTML = `<div class="time-label">${l}</div><div class="time-content ${has?'filled':'empty'}${isSelectable}${isSelected}" data-slot="${s}" data-area="main" style="${has?`--block-color:${a.color};--block-bg:${a.color}15`:''}">${has?`<div class="activity">${selectMode==='box'?`<span class="check-btn" data-slot="${s}">${selectedSlots.has(s)?'✓':'○'}</span>`:''}<span class="activity-text">${escapeHtml(a.text)}</span>${a.note?`<span class="activity-note">${escapeHtml(a.note)}</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div>`:''}</div>`;
+        block.innerHTML = `<div class="time-label">${l}</div><div class="time-content ${has?'filled':'empty'}" data-slot="${s}" data-area="main" style="${has?`--block-color:${a.color};--block-bg:${a.color}15`:''}">${has?`<div class="activity"><span class="activity-text">${escapeHtml(a.text)}</span>${a.note?`<span class="activity-note">${escapeHtml(a.note)}</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div>`:''}</div>`;
         container.appendChild(block);
       });
     }
   });
 }
+
+// ===== CHART PERIOD SWITCHING =====
+document.querySelectorAll('.chart-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    chartPeriod = tab.dataset.period;
+    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderPieChart();
+  });
+});
 
 function updateStats() {
   let filled = 0;
@@ -682,37 +689,7 @@ function updateStats() {
   document.getElementById('statActivities').textContent = filled;
 }
 
-// ===== MODE SWITCHING =====
-document.getElementById('modeClick').addEventListener('click', () => {
-  selectMode = 'click';
-  document.getElementById('modeClick').classList.add('active');
-  document.getElementById('modeBox').classList.remove('active');
-  clearSelection();
-  renderTimeBlocks();
-});
-
-document.getElementById('modeBox').addEventListener('click', () => {
-  selectMode = 'box';
-  document.getElementById('modeBox').classList.add('active');
-  document.getElementById('modeClick').classList.remove('active');
-  renderTimeBlocks();
-});
-
-// ===== CHART PERIOD SWITCHING =====
-document.querySelectorAll('.chart-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    chartPeriod = tab.dataset.period;
-    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    if (chartPeriod !== 'day' && currentUser) {
-      fetchDaysForChart().then(() => renderPieChart());
-    } else {
-      renderPieChart();
-    }
-  });
-});
-
-// ===== BOX SELECTION =====
+// ===== LONG-PRESS BOX SELECTION =====
 function clearSelection() {
   selectedSlots = new Set();
   document.getElementById('selectionInfo').classList.remove('visible');
@@ -730,7 +707,7 @@ function updateSelectionUI() {
 }
 
 function getSelectableElements() {
-  return document.querySelectorAll('.time-content.selectable');
+  return document.querySelectorAll('#timeBlocks .time-content, #sleepActivities .time-content');
 }
 
 function isElementInBox(el, x1, y1, x2, y2) {
@@ -754,104 +731,86 @@ function updateSelectedFromBox(x1, y1, x2, y2) {
   openModalForSlots(editingSlots);
 }
 
-// Box selection on main time blocks
+// ===== LONG-PRESS BOX SELECTION =====
 const timeBlocksContainer = document.getElementById('timeBlocks');
 
-timeBlocksContainer.addEventListener('mousedown', (e) => {
-  if (selectMode !== 'box') return;
-  if (e.target.closest('.edit-btn')) return;
-  const content = e.target.closest('.time-content.selectable');
-  if (!content) return;
+function cancelLongPress() {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  longPressTriggered = false;
+}
+
+function startLongPress(e) {
+  if (e.target.closest('.edit-btn') || e.target.closest('.check-btn')) return;
+  const block = e.target.closest('.time-block');
+  if (!block) return;
+  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+  if (!clientX || !clientY) return;
+
+  longPressTimer = setTimeout(() => {
+    longPressTriggered = true;
+    isBoxSelecting = true;
+    boxStartX = clientX;
+    boxStartY = clientY;
+    const box = document.getElementById('selectionBox');
+    box.style.display = 'block';
+    box.style.left = clientX + 'px';
+    box.style.top = clientY + 'px';
+    box.style.width = '0px';
+    box.style.height = '0px';
+  }, LONG_PRESS_DELAY);
+}
+
+function onMove(e) {
+  if (!isBoxSelecting) return;
   e.preventDefault();
-  isBoxSelecting = true;
-  boxStartX = e.clientX;
-  boxStartY = e.clientY;
+  const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+  const clientY = e.clientY || (e.touches && e.touches[0].clientY);
   const box = document.getElementById('selectionBox');
-  box.style.display = 'block';
-  box.style.left = boxStartX + 'px';
-  box.style.top = boxStartY + 'px';
-  box.style.width = '0px';
-  box.style.height = '0px';
-});
-
-document.addEventListener('mousemove', (e) => {
-  if (!isBoxSelecting) return;
-  const box = document.getElementById('selectionBox');
-  const x = Math.min(boxStartX, e.clientX);
-  const y = Math.min(boxStartY, e.clientY);
-  const w = Math.abs(e.clientX - boxStartX);
-  const h = Math.abs(e.clientY - boxStartY);
+  const x = Math.min(boxStartX, clientX);
+  const y = Math.min(boxStartY, clientY);
+  const w = Math.abs(clientX - boxStartX);
+  const h = Math.abs(clientY - boxStartY);
   box.style.left = x + 'px';
   box.style.top = y + 'px';
   box.style.width = w + 'px';
   box.style.height = h + 'px';
-});
+}
 
-document.addEventListener('mouseup', (e) => {
+function onEnd(e) {
+  cancelLongPress();
   if (!isBoxSelecting) return;
   isBoxSelecting = false;
   document.getElementById('selectionBox').style.display = 'none';
-  updateSelectedFromBox(boxStartX, boxStartY, e.clientX, e.clientY);
-});
+  const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+  const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+  if (clientX && clientY) {
+    updateSelectedFromBox(boxStartX, boxStartY, clientX, clientY);
+  }
+}
 
-// Touch box selection
+// Mouse events on time blocks
+timeBlocksContainer.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  startLongPress(e);
+});
+document.addEventListener('mousemove', onMove);
+document.addEventListener('mouseup', onEnd);
+
+// Touch events on time blocks
 timeBlocksContainer.addEventListener('touchstart', (e) => {
-  if (selectMode !== 'box') return;
-  if (e.target.closest('.edit-btn')) return;
-  const content = e.target.closest('.time-content.selectable');
-  if (!content) return;
-  const t = e.touches[0];
-  isBoxSelecting = true;
-  boxStartX = t.clientX;
-  boxStartY = t.clientY;
-  const box = document.getElementById('selectionBox');
-  box.style.display = 'block';
-  box.style.left = boxStartX + 'px';
-  box.style.top = boxStartY + 'px';
-  box.style.width = '0px';
-  box.style.height = '0px';
+  startLongPress(e);
 }, { passive: true });
+document.addEventListener('touchmove', onMove, { passive: false });
+document.addEventListener('touchend', onEnd);
 
-document.addEventListener('touchmove', (e) => {
-  if (!isBoxSelecting) return;
-  const t = e.touches[0];
-  const box = document.getElementById('selectionBox');
-  const x = Math.min(boxStartX, t.clientX);
-  const y = Math.min(boxStartY, t.clientY);
-  const w = Math.abs(t.clientX - boxStartX);
-  const h = Math.abs(t.clientY - boxStartY);
-  box.style.left = x + 'px';
-  box.style.top = y + 'px';
-  box.style.width = w + 'px';
-  box.style.height = h + 'px';
-}, { passive: true });
-
-document.addEventListener('touchend', (e) => {
-  if (!isBoxSelecting) return;
-  isBoxSelecting = false;
-  document.getElementById('selectionBox').style.display = 'none';
-  const t = e.changedTouches[0];
-  updateSelectedFromBox(boxStartX, boxStartY, t.clientX, t.clientY);
-});
-
-// Selection info buttons
-document.getElementById('clearSelection').addEventListener('click', clearSelection);
-
-document.getElementById('fillSelected').addEventListener('click', () => {
-  if (selectedSlots.size === 0) return;
-  editingSlots = [...selectedSlots];
-  openModalForSlots(editingSlots);
-});
+// Cancel long-press on scroll/leave
+timeBlocksContainer.addEventListener('scroll', cancelLongPress, { passive: true });
 
 // ===== CLICK TO EDIT =====
 timeBlocksContainer.addEventListener('click', (e) => {
-  if (selectMode === 'box') {
-    // In box mode, clicking edit button still works
-    const editBtn = e.target.closest('.edit-btn');
-    if (editBtn) {
-      editingSlots = [editBtn.dataset.slot];
-      openModalForSlots(editingSlots);
-    }
+  if (longPressTriggered) {
+    longPressTriggered = false;
     return;
   }
   const editBtn = e.target.closest('.edit-btn');
@@ -869,20 +828,31 @@ timeBlocksContainer.addEventListener('click', (e) => {
 
 // Sleep activities click
 document.getElementById('sleepActivities').addEventListener('click', (e) => {
+  if (longPressTriggered) {
+    longPressTriggered = false;
+    return;
+  }
   const editBtn = e.target.closest('.edit-btn');
   if (editBtn) {
     editingSlots = [editBtn.dataset.slot];
     openModalForSlots(editingSlots);
     return;
   }
-  if (selectMode === 'click') {
-    const content = e.target.closest('.time-content');
-    if (content) {
-      editingSlots = [content.dataset.slot];
-      openModalForSlots(editingSlots);
-    }
+  const content = e.target.closest('.time-content');
+  if (content) {
+    editingSlots = [content.dataset.slot];
+    openModalForSlots(editingSlots);
   }
 });
+
+// Sleep block long-press start
+document.getElementById('sleepActivities').addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  startLongPress(e);
+});
+document.getElementById('sleepActivities').addEventListener('touchstart', (e) => {
+  startLongPress(e);
+}, { passive: true });
 
 // Sleep block toggle
 document.getElementById('sleepHeader').addEventListener('click', (e) => {
