@@ -19,6 +19,7 @@
     --radius: 10px;
     --sleep-bg: #e8ecf4;
     --sleep-text: #9ca3af;
+    --drag-highlight: rgba(74,108,247,0.15);
   }
 
   * {
@@ -51,11 +52,38 @@
     margin-bottom: 16px;
   }
 
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
   h1 {
     font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: -0.3px;
     color: var(--text);
+  }
+
+  .user-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-light);
+  }
+
+  .user-name {
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+
+  .user-name:hover {
+    background: var(--primary-light);
   }
 
   .sync-status {
@@ -74,13 +102,8 @@
     display: inline-block;
   }
 
-  .sync-dot.offline {
-    background: #faad14;
-  }
-
-  .sync-dot.error {
-    background: #ff4d4f;
-  }
+  .sync-dot.offline { background: #faad14; }
+  .sync-dot.error { background: #ff4d4f; }
 
   .date-nav {
     display: flex;
@@ -163,14 +186,8 @@
     transition: all 0.2s;
   }
 
-  .actions button:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-  }
-
-  .actions button:active {
-    transform: translateY(0);
-  }
+  .actions button:hover { opacity: 0.9; transform: translateY(-1px); }
+  .actions button:active { transform: translateY(0); }
 
   .actions button.secondary {
     background: var(--card-bg);
@@ -189,6 +206,105 @@
     border: 1px solid #ffccc7;
   }
 
+  /* Pie chart */
+  .chart-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-card h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .chart-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .chart-canvas-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
+  }
+
+  .chart-canvas-wrap canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .chart-center-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .chart-center-text .hours {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .chart-center-text .label {
+    font-size: 0.7rem;
+    color: var(--text-light);
+  }
+
+  .chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-label {
+    flex: 1;
+    color: var(--text);
+  }
+
+  .legend-value {
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 0.75rem;
+  }
+
+  .chart-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-light);
+    font-size: 0.85rem;
+  }
+
   /* Sleep block */
   .sleep-block {
     background: var(--sleep-bg);
@@ -199,13 +315,8 @@
     transition: all 0.2s;
   }
 
-  .sleep-block.collapsed {
-    cursor: pointer;
-  }
-
-  .sleep-block.collapsed:hover {
-    box-shadow: var(--shadow-lg);
-  }
+  .sleep-block.collapsed { cursor: pointer; }
+  .sleep-block.collapsed:hover { box-shadow: var(--shadow-lg); }
 
   .sleep-header {
     padding: 14px 16px;
@@ -226,19 +337,9 @@
     flex-shrink: 0;
   }
 
-  .sleep-info {
-    flex: 1;
-  }
-
-  .sleep-info .time-range {
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-
-  .sleep-info .sleep-label {
-    font-size: 0.75rem;
-    color: var(--text-light);
-  }
+  .sleep-info { flex: 1; }
+  .sleep-info .time-range { font-weight: 600; font-size: 0.9rem; }
+  .sleep-info .sleep-label { font-size: 0.75rem; color: var(--text-light); }
 
   .sleep-toggle {
     font-size: 0.75rem;
@@ -249,16 +350,14 @@
     flex-shrink: 0;
   }
 
-  .sleep-block.collapsed .sleep-activities {
-    display: none;
-  }
+  .sleep-block.collapsed .sleep-activities { display: none; }
 
   .sleep-activities {
     border-top: 1px solid rgba(0,0,0,0.05);
     padding: 8px 16px 12px;
   }
 
-  /* Time blocks container */
+  /* Time blocks */
   .time-blocks {
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -280,16 +379,17 @@
   .time-block {
     display: flex;
     border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
+    transition: background 0.1s;
     min-height: 44px;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  .time-block:last-child {
-    border-bottom: none;
-  }
+  .time-block:last-child { border-bottom: none; }
+  .time-block:hover { background: var(--hover); }
 
-  .time-block:hover {
-    background: var(--hover);
+  .time-block.dragging-over {
+    background: var(--drag-highlight) !important;
   }
 
   .time-label {
@@ -316,18 +416,9 @@
     transition: all 0.15s;
   }
 
-  .time-content.empty {
-    color: #d9d9d9;
-  }
-
-  .time-content.empty::after {
-    content: "+";
-    font-size: 1.1rem;
-  }
-
-  .time-content.empty:hover {
-    background: var(--primary-light);
-  }
+  .time-content.empty { color: #d9d9d9; }
+  .time-content.empty::after { content: "+"; font-size: 1.1rem; }
+  .time-content.empty:hover { background: var(--primary-light); }
 
   .time-content.filled {
     border-left: 3px solid var(--block-color, var(--primary));
@@ -377,6 +468,23 @@
     color: var(--text);
   }
 
+  /* Drag hint */
+  .drag-hint {
+    text-align: center;
+    padding: 8px;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .drag-hint span {
+    color: var(--primary);
+    font-weight: 500;
+  }
+
   /* Modal */
   .modal-overlay {
     display: none;
@@ -390,9 +498,7 @@
     backdrop-filter: blur(2px);
   }
 
-  .modal-overlay.active {
-    display: flex;
-  }
+  .modal-overlay.active { display: flex; }
 
   .modal {
     background: var(--card-bg);
@@ -442,9 +548,7 @@
     border-color: var(--primary);
   }
 
-  .modal input::placeholder {
-    color: #bbb;
-  }
+  .modal input::placeholder { color: #bbb; }
 
   .modal .color-picker {
     display: flex;
@@ -462,9 +566,7 @@
     transition: transform 0.15s;
   }
 
-  .modal .color-option:hover {
-    transform: scale(1.15);
-  }
+  .modal .color-option:hover { transform: scale(1.15); }
 
   .modal .color-option.selected {
     border-color: var(--text);
@@ -487,23 +589,10 @@
     transition: all 0.15s;
   }
 
-  .modal-actions .save {
-    background: var(--primary);
-    color: white;
-  }
-
-  .modal-actions .save:hover {
-    opacity: 0.9;
-  }
-
-  .modal-actions .cancel {
-    background: var(--hover);
-    color: var(--text);
-  }
-
-  .modal-actions .cancel:hover {
-    background: var(--border);
-  }
+  .modal-actions .save { background: var(--primary); color: white; }
+  .modal-actions .save:hover { opacity: 0.9; }
+  .modal-actions .cancel { background: var(--hover); color: var(--text); }
+  .modal-actions .cancel:hover { background: var(--border); }
 
   .modal-actions .delete {
     background: transparent;
@@ -512,9 +601,50 @@
     border: 1px solid #ffccc7;
   }
 
-  .modal-actions .delete:hover {
-    background: #fff2f0;
+  .modal-actions .delete:hover { background: #fff2f0; }
+
+  /* Login Modal */
+  .login-modal .modal {
+    max-width: 340px;
+    text-align: center;
   }
+
+  .login-modal .login-icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .login-modal .login-desc {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .login-modal input {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+
+  .login-modal .login-hint {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-bottom: 16px;
+  }
+
+  .login-modal .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .login-modal .login-btn:hover { opacity: 0.9; }
+  .login-modal .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* Toast */
   .toast {
@@ -532,16 +662,10 @@
     white-space: nowrap;
   }
 
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
-  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
 
-  /* Hidden file input */
-  #importInput {
-    display: none;
-  }
+  #importInput { display: none; }
 
-  /* Loading state */
   .loading-overlay {
     display: none;
     position: fixed;
@@ -554,9 +678,7 @@
     gap: 12px;
   }
 
-  .loading-overlay.active {
-    display: flex;
-  }
+  .loading-overlay.active { display: flex; }
 
   .spinner {
     width: 32px;
@@ -567,88 +689,40 @@
     animation: spin 0.8s linear infinite;
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Responsive */
   @media (max-width: 500px) {
-    .container {
-      padding: 12px;
-    }
-
-    h1 {
-      font-size: 1.15rem;
-    }
-
-    header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-
-    .date-nav {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .stats {
-      gap: 8px;
-    }
-
-    .stat-card {
-      padding: 10px 8px;
-    }
-
-    .stat-card .value {
-      font-size: 1.1rem;
-    }
-
-    .actions button {
-      padding: 9px 8px;
-      font-size: 0.75rem;
-    }
-
-    .time-label {
-      width: 48px;
-      font-size: 0.7rem;
-      padding: 8px 6px;
-    }
-
-    .time-content {
-      padding: 8px 10px;
-      min-height: 40px;
-    }
-
-    .time-content .activity-text {
-      font-size: 0.8rem;
-    }
-
-    .time-content .edit-btn {
-      opacity: 1;
-      padding: 4px;
-    }
-
-    .sleep-header {
-      padding: 12px 14px;
-    }
-
-    .sleep-icon {
-      width: 36px;
-      height: 36px;
-      font-size: 1.2rem;
-    }
+    .container { padding: 12px; }
+    h1 { font-size: 1.15rem; }
+    header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .date-nav { width: 100%; justify-content: center; }
+    .stats { gap: 8px; }
+    .stat-card { padding: 10px 8px; }
+    .stat-card .value { font-size: 1.1rem; }
+    .actions button { padding: 9px 8px; font-size: 0.75rem; }
+    .time-label { width: 48px; font-size: 0.7rem; padding: 8px 6px; }
+    .time-content { padding: 8px 10px; min-height: 40px; }
+    .time-content .activity-text { font-size: 0.8rem; }
+    .time-content .edit-btn { opacity: 1; padding: 4px; }
+    .sleep-header { padding: 12px 14px; }
+    .sleep-icon { width: 36px; height: 36px; font-size: 1.2rem; }
+    .chart-container { flex-direction: column; align-items: center; }
+    .chart-canvas-wrap { width: 120px; height: 120px; }
+    .drag-hint { font-size: 0.7rem; padding: 6px; }
   }
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <div>
+    <div class="header-left">
       <h1>时间记录</h1>
-      <div class="sync-status">
+      <div class="user-bar">
         <span class="sync-dot" id="syncDot"></span>
         <span id="syncText">连接中...</span>
+        <span>|</span>
+        <span>用户：</span>
+        <span class="user-name" id="userName" title="点击切换用户">未登录</span>
       </div>
     </div>
     <div class="date-nav">
@@ -674,6 +748,17 @@
     </div>
   </div>
 
+  <div class="chart-card" id="chartCard">
+    <h3>今日时间分布</h3>
+    <div id="chartContent">
+      <div class="chart-empty">记录一些活动后，这里会显示时间分布</div>
+    </div>
+  </div>
+
+  <div class="drag-hint">
+    <span>提示：</span>按住一个时间块并拖动，可批量选中多个时段统一记录
+  </div>
+
   <div class="actions">
     <button class="secondary" id="exportBtn">导出</button>
     <button class="secondary" id="importBtn">导入</button>
@@ -695,7 +780,7 @@
   <div class="time-blocks" id="timeBlocks"></div>
 </div>
 
-<!-- Modal -->
+<!-- Activity Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h2 id="modalTitle">编辑时间块</h2>
@@ -711,21 +796,28 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<!-- Login Modal -->
+<div class="modal-overlay login-modal" id="loginModal">
+  <div class="modal">
+    <div class="login-icon">&#128274;</div>
+    <h2>设置用户名</h2>
+    <p class="login-desc">输入一个用户名，用于在多台设备间同步数据。<br>在同一设备上输入相同的用户名即可看到相同的数据。</p>
+    <input type="text" id="usernameInput" placeholder="输入用户名" maxlength="20" autocomplete="off">
+    <p class="login-hint">用户名区分大小写，仅限字母、数字和下划线</p>
+    <button class="login-btn" id="loginBtn">开始使用</button>
+  </div>
+</div>
 
-<!-- Loading -->
+<div class="toast" id="toast"></div>
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
   <div style="font-size:0.85rem;color:var(--text-light)">同步数据中...</div>
 </div>
-
-<!-- Hidden import input -->
 <input type="file" id="importInput" accept=".json">
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBds0R-1ks9VZnO6iEUM-el94E77dzHEWU",
@@ -740,24 +832,38 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const COLORS = [
-  '#4a6cf7', '#50c878', '#ff6b6b', '#ffa94d',
-  '#9775fa', '#f06595', '#3bc9db', '#ffd43b',
-  '#69db7c', '#e599f7', '#74c0fc', '#ff8787'
-];
+// Color labels for the legend
+const COLOR_LABELS = {
+  '#50c878': '工作',
+  '#4a6cf7': '交通',
+  '#9775fa': '娱乐',
+  '#ff6b6b': '学习',
+  '#ffd43b': '输出',
+  '#ffa94d': '生活',
+  '#f06595': '运动',
+  '#3bc9db': '休息',
+  '#69db7c': '阅读',
+  '#e599f7': '社交',
+  '#74c0fc': '其他',
+  '#ff8787': '饮食'
+};
 
 const SLEEP_START = 2;
 const SLEEP_END = 8;
 
 let currentDate = new Date();
 let dayData = {};
-let editingSlot = null;
+let editingSlots = [];
 let isSleepExpanded = false;
-let firebaseUserId = 'default';
+let currentUser = '';
+let unsubscribe = null;
 
-function getDateKey(date) {
-  return date.toISOString().split('T')[0];
-}
+// Drag state
+let isDragging = false;
+let dragStartSlot = null;
+let dragSlots = new Set();
+
+function getDateKey(date) { return date.toISOString().split('T')[0]; }
 
 function formatDate(date) {
   const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -778,13 +884,7 @@ function setSyncStatus(status, text) {
   const dot = document.getElementById('syncDot');
   const txt = document.getElementById('syncText');
   dot.className = 'sync-dot';
-  if (status === 'online') {
-    dot.style.background = '#52c41a';
-  } else if (status === 'offline') {
-    dot.style.background = '#faad14';
-  } else {
-    dot.style.background = '#ff4d4f';
-  }
+  dot.style.background = status === 'online' ? '#52c41a' : status === 'offline' ? '#faad14' : '#ff4d4f';
   txt.textContent = text;
 }
 
@@ -799,32 +899,53 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
-function initFirebase() {
-  // Try to get a user ID from localStorage or generate one
-  firebaseUserId = localStorage.getItem('tt_userId') || 'user_' + Math.random().toString(36).substr(2, 9);
-  localStorage.setItem('tt_userId', firebaseUserId);
+function isValidUsername(name) { return /^[a-zA-Z0-9_]{1,20}$/.test(name); }
 
-  const dataRef = doc(db, 'timeData', firebaseUserId);
+function showLoginModal() {
+  document.getElementById('loginModal').classList.add('active');
+  setTimeout(() => document.getElementById('usernameInput').focus(), 150);
+}
 
-  // Listen for real-time updates
-  onSnapshot(dataRef, (snap) => {
-    if (snap.exists()) {
-      dayData = snap.data();
-      setSyncStatus('online', '已同步');
-    } else {
-      dayData = {};
-      setSyncStatus('online', '已同步');
-    }
+function hideLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
+
+function doLogin(username) {
+  username = username.trim().toLowerCase();
+  if (!isValidUsername(username)) {
+    showToast('用户名只能包含字母、数字和下划线');
+    return;
+  }
+  currentUser = username;
+  localStorage.setItem('tt_username', username);
+  document.getElementById('userName').textContent = username;
+  hideLoginModal();
+  connectToFirebase(username);
+}
+
+function switchUser() {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  dayData = {};
+  currentUser = '';
+  localStorage.removeItem('tt_username');
+  document.getElementById('userName').textContent = '未登录';
+  setSyncStatus('offline', '未连接');
+  renderAll();
+  showLoginModal();
+}
+
+function connectToFirebase(username) {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  const dataRef = doc(db, 'timeData', username);
+  setSyncStatus('online', '连接中...');
+  unsubscribe = onSnapshot(dataRef, (snap) => {
+    dayData = snap.exists() ? snap.data() : {};
+    setSyncStatus('online', '已同步');
     renderAll();
   }, (error) => {
     console.error('Firebase error:', error);
     setSyncStatus('error', '同步失败');
-    // Fall back to localStorage
     loadLocalData();
     renderAll();
   });
-
-  setSyncStatus('online', '连接中...');
 }
 
 function loadLocalData() {
@@ -832,19 +953,14 @@ function loadLocalData() {
   if (stored) {
     try {
       const allData = JSON.parse(stored);
-      const key = getDateKey(currentDate);
-      dayData = allData[key] || {};
-    } catch (e) {
-      dayData = {};
-    }
+      dayData = allData[getDateKey(currentDate)] || {};
+    } catch (e) { dayData = {}; }
   }
 }
 
 async function saveToFirebase() {
   try {
-    const dataRef = doc(db, 'timeData', firebaseUserId);
-    await setDoc(dataRef, dayData);
-    // Also save to localStorage as backup
+    await setDoc(doc(db, 'timeData', currentUser), dayData);
     saveToLocal();
   } catch (e) {
     console.error('Save error:', e);
@@ -854,22 +970,110 @@ async function saveToFirebase() {
 }
 
 function saveToLocal() {
-  const key = getDateKey(currentDate);
   let allData = {};
   const stored = localStorage.getItem('timeTrackerData');
-  if (stored) {
-    try { allData = JSON.parse(stored); } catch (e) {}
-  }
-  allData[key] = dayData;
+  if (stored) { try { allData = JSON.parse(stored); } catch (e) {} }
+  allData[getDateKey(currentDate)] = dayData;
   localStorage.setItem('timeTrackerData', JSON.stringify(allData));
 }
 
 function renderAll() {
+  renderPieChart();
   renderSleepBlock();
   renderTimeBlocks();
   updateStats();
 }
 
+// ===== PIE CHART =====
+function renderPieChart() {
+  const container = document.getElementById('chartContent');
+  const entries = [];
+
+  for (let i = 0; i < 24; i++) {
+    if (dayData[i] && dayData[i].text) entries.push(dayData[i]);
+    if (dayData[i + '.5'] && dayData[i + '.5'].text) entries.push(dayData[i + '.5']);
+  }
+
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="chart-empty">记录一些活动后，这里会显示时间分布</div>';
+    return;
+  }
+
+  // Group by color
+  const colorMap = {};
+  entries.forEach(e => {
+    const c = e.color || '#4a6cf7';
+    if (!colorMap[c]) colorMap[c] = { count: 0, label: COLOR_LABELS[c] || '其他' };
+    colorMap[c].count++;
+  });
+
+  const total = entries.length;
+  const recordedHours = (total * 0.5);
+
+  // Build legend HTML
+  let legendHTML = '';
+  const sorted = Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count);
+  sorted.forEach(([color, info]) => {
+    const hours = (info.count * 0.5);
+    const pct = Math.round(info.count / total * 100);
+    legendHTML += `
+      <div class="legend-item">
+        <span class="legend-dot" style="background:${color}"></span>
+        <span class="legend-label">${info.label}</span>
+        <span class="legend-value">${hours % 1 === 0 ? hours : hours.toFixed(1)}h (${pct}%)</span>
+      </div>
+    `;
+  });
+
+  container.innerHTML = `
+    <div class="chart-container">
+      <div class="chart-canvas-wrap">
+        <canvas id="pieCanvas" width="280" height="280"></canvas>
+        <div class="chart-center-text">
+          <div class="hours">${recordedHours % 1 === 0 ? recordedHours : recordedHours.toFixed(1)}h</div>
+          <div class="label">已记录</div>
+        </div>
+      </div>
+      <div class="chart-legend">${legendHTML}</div>
+    </div>
+  `;
+
+  // Draw pie chart
+  requestAnimationFrame(() => drawPieChart(sorted, total));
+}
+
+function drawPieChart(sorted, total) {
+  const canvas = document.getElementById('pieCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const outerR = Math.min(cx, cy) - 4;
+  const innerR = outerR * 0.55;
+
+  ctx.clearRect(0, 0, w, h);
+
+  let startAngle = -Math.PI / 2;
+  const gap = 0.02;
+
+  sorted.forEach(([color, info]) => {
+    const sliceAngle = (info.count / total) * Math.PI * 2;
+    if (sliceAngle < 0.01) return;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, startAngle + gap / 2, startAngle + sliceAngle - gap / 2);
+    ctx.arc(cx, cy, innerR, startAngle + sliceAngle - gap / 2, startAngle + gap / 2, true);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    startAngle += sliceAngle;
+  });
+}
+
+// ===== SLEEP BLOCK =====
 function renderSleepBlock() {
   const block = document.getElementById('sleepBlock');
   const activitiesDiv = document.getElementById('sleepActivities');
@@ -878,50 +1082,60 @@ function renderSleepBlock() {
   block.classList.toggle('collapsed', !isSleepExpanded);
   toggle.textContent = isSleepExpanded ? '收起' : '展开';
 
-  // Count filled sleep slots
   let filledCount = 0;
   for (let i = SLEEP_START; i < SLEEP_END; i++) {
     if (dayData[i] && dayData[i].text) filledCount++;
+    if (dayData[i + '.5'] && dayData[i + '.5'].text) filledCount++;
   }
 
   const sleepLabel = block.querySelector('.sleep-label');
+  const totalSlots = (SLEEP_END - SLEEP_START) * 2;
   if (filledCount === 0) {
     sleepLabel.textContent = '睡眠时段 · 点击展开记录';
-  } else if (filledCount === (SLEEP_END - SLEEP_START) * 2) {
+  } else if (filledCount === totalSlots) {
     sleepLabel.textContent = `睡眠时段 · 已全部记录 (${SLEEP_END - SLEEP_START}小时)`;
   } else {
-    sleepLabel.textContent = `睡眠时段 · 已记录 ${filledCount} 个时段`;
+    sleepLabel.textContent = `睡眠时段 · 已记录 ${filledCount}/${totalSlots} 个时段`;
   }
 
-  // Render sleep activities
   activitiesDiv.innerHTML = '';
   for (let i = SLEEP_START; i < SLEEP_END; i++) {
-    // Hour block
-    const hourActivity = dayData[i];
-    const halfHourActivity = dayData[i + '.5'];
-
-    [
-      { slot: i, label: `${String(i).padStart(2, '0')}:00`, activity: hourActivity },
-      { slot: i + '.5', label: `${String(i).padStart(2, '0')}:30`, activity: halfHourActivity }
+    [{ slot: i, label: `${String(i).padStart(2,'0')}:00`, activity: dayData[i] },
+     { slot: i + '.5', label: `${String(i).padStart(2,'0')}:30`, activity: dayData[i + '.5'] }
     ].forEach(({ slot, label, activity }) => {
       const hasContent = activity && activity.text;
       const div = document.createElement('div');
-      div.className = `time-block`;
+      div.className = 'time-block';
       div.innerHTML = `
         <div class="time-label">${label}</div>
         <div class="time-content ${hasContent ? 'filled' : 'empty'}" data-slot="${slot}" style="${hasContent ? `--block-color:${activity.color};--block-bg:${activity.color}15` : ''}">
-          ${hasContent ? `
-            <div class="activity">
-              <span class="activity-text">${escapeHtml(activity.text)}</span>
-              ${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}
-              <button class="edit-btn" data-slot="${slot}">&#9998;</button>
-            </div>
-          ` : ''}
-        </div>
-      `;
+          ${hasContent ? `<div class="activity"><span class="activity-text">${escapeHtml(activity.text)}</span>${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}<button class="edit-btn" data-slot="${slot}">&#9998;</button></div>` : ''}
+        </div>`;
       activitiesDiv.appendChild(div);
     });
   }
+}
+
+// ===== TIME BLOCKS =====
+function getSlotsInRange() {
+  const periods = [
+    { start: 8, end: 12 }, { start: 12, end: 18 },
+    { start: 18, end: 24 }, { start: 0, end: 2 }
+  ];
+  const slots = [];
+  periods.forEach(({ start, end }) => {
+    for (let i = start; i < end; i++) {
+      slots.push(i, i + '.5');
+    }
+  });
+  return slots;
+}
+
+function slotToIndex(slot) {
+  if (typeof slot === 'string' && slot.includes('.')) {
+    return parseInt(slot) * 2 + 1;
+  }
+  return parseInt(slot) * 2;
 }
 
 function renderTimeBlocks() {
@@ -936,20 +1150,14 @@ function renderTimeBlocks() {
   ];
 
   periods.forEach(({ label, start, end }) => {
-    // Period header
     const header = document.createElement('div');
     header.className = 'period-label';
     header.textContent = label;
     container.appendChild(header);
 
     for (let i = start; i < end; i++) {
-      // Full hour
-      const hourActivity = dayData[i];
-      const halfHourActivity = dayData[i + '.5'];
-
-      [
-        { slot: i, label: `${String(i).padStart(2, '0')}:00`, activity: hourActivity },
-        { slot: i + '.5', label: `${String(i).padStart(2, '0')}:30`, activity: halfHourActivity }
+      [{ slot: i, label: `${String(i).padStart(2,'0')}:00`, activity: dayData[i] },
+       { slot: i + '.5', label: `${String(i).padStart(2,'0')}:30`, activity: dayData[i + '.5'] }
       ].forEach(({ slot, label, activity }) => {
         const hasContent = activity && activity.text;
         const block = document.createElement('div');
@@ -957,23 +1165,108 @@ function renderTimeBlocks() {
         block.innerHTML = `
           <div class="time-label">${label}</div>
           <div class="time-content ${hasContent ? 'filled' : 'empty'}" data-slot="${slot}" style="${hasContent ? `--block-color:${activity.color};--block-bg:${activity.color}15` : ''}">
-            ${hasContent ? `
-              <div class="activity">
-                <span class="activity-text">${escapeHtml(activity.text)}</span>
-                ${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}
-                <button class="edit-btn" data-slot="${slot}">&#9998;</button>
-              </div>
-            ` : ''}
-          </div>
-        `;
+            ${hasContent ? `<div class="activity"><span class="activity-text">${escapeHtml(activity.text)}</span>${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}<button class="edit-btn" data-slot="${slot}">&#9998;</button></div>` : ''}
+          </div>`;
         container.appendChild(block);
       });
     }
   });
+
+  setupDragListeners(container);
+}
+
+function setupDragListeners(container) {
+  const contents = container.querySelectorAll('.time-content');
+
+  contents.forEach(el => {
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.edit-btn')) return;
+      e.preventDefault();
+      startDrag(el.dataset.slot);
+    });
+
+    el.addEventListener('mouseenter', () => {
+      if (isDragging) {
+        updateDragSelection(el.dataset.slot);
+      }
+    });
+
+    el.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.edit-btn')) return;
+      e.preventDefault();
+      startDrag(el.dataset.slot);
+    }, { passive: false });
+  });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (el) {
+      const content = el.closest('.time-content');
+      if (content) updateDragSelection(content.dataset.slot);
+    }
+  }, { passive: true });
+
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('touchend', endDrag);
+}
+
+function startDrag(slot) {
+  if (!currentUser) {
+    showToast('请先登录');
+    showLoginModal();
+    return;
+  }
+  isDragging = true;
+  dragStartSlot = slot;
+  dragSlots = new Set([slot]);
+  highlightDragSlots();
+}
+
+function updateDragSelection(currentSlot) {
+  if (!isDragging || !dragStartSlot) return;
+
+  const allSlots = getSlotsInRange();
+  const startIdx = allSlots.indexOf(dragStartSlot);
+  const currentIdx = allSlots.indexOf(currentSlot);
+
+  if (startIdx === -1 || currentIdx === -1) return;
+
+  const minIdx = Math.min(startIdx, currentIdx);
+  const maxIdx = Math.max(startIdx, currentIdx);
+
+  dragSlots = new Set();
+  for (let i = minIdx; i <= maxIdx; i++) {
+    dragSlots.add(allSlots[i]);
+  }
+
+  highlightDragSlots();
+}
+
+function highlightDragSlots() {
+  document.querySelectorAll('.time-content').forEach(el => {
+    el.classList.toggle('dragging-over', dragSlots.has(el.dataset.slot));
+  });
+}
+
+function endDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+
+  // Remove drag highlights
+  document.querySelectorAll('.dragging-over').forEach(el => el.classList.remove('dragging-over'));
+
+  if (dragSlots.size > 0) {
+    editingSlots = [...dragSlots];
+    openModalForSlots(editingSlots);
+  }
+
+  dragSlots = new Set();
+  dragStartSlot = null;
 }
 
 function updateStats() {
-  // Count all 48 half-hour slots
   let filledCount = 0;
   for (let i = 0; i < 24; i++) {
     if (dayData[i] && dayData[i].text) filledCount++;
@@ -985,11 +1278,7 @@ function updateStats() {
   document.getElementById('statActivities').textContent = filledCount;
 }
 
-function openModal(slot) {
-  editingSlot = slot;
-  const activity = dayData[slot];
-
-  // Parse slot
+function formatSlotTime(slot) {
   let hour, minute;
   if (typeof slot === 'string' && slot.includes('.')) {
     hour = parseInt(slot.split('.')[0]);
@@ -998,28 +1287,50 @@ function openModal(slot) {
     hour = parseInt(slot);
     minute = 0;
   }
-  const nextMinute = minute === 0 ? 30 : 0;
-  const nextHour = minute === 0 ? hour : hour + 1;
+  return `${String(hour).padStart(2, '0')}:${String(minute).toString().padStart(2, '0')}`;
+}
 
-  document.getElementById('modalTitle').textContent = '编辑时间块';
-  document.getElementById('timeHint').textContent =
-    `${String(hour).padStart(2, '0')}:${String(minute).toString().padStart(2, '0')} - ${String(nextHour).padStart(2, '0')}:${String(nextMinute).toString().padStart(2, '0')}`;
-  document.getElementById('activityInput').value = activity ? activity.text : '';
-  document.getElementById('noteInput').value = activity ? (activity.note || '') : '';
-  document.getElementById('deleteBtn').style.display = activity && activity.text ? 'block' : 'none';
+function openModalForSlots(slots) {
+  editingSlots = slots;
 
-  renderColorPicker(activity ? activity.color : null);
+  const sorted = [...slots].sort((a, b) => slotToIndex(a) - slotToIndex(b));
+  const startTime = formatSlotTime(sorted[0]);
+
+  const lastSlot = sorted[sorted.length - 1];
+  let endHour, endMinute;
+  if (typeof lastSlot === 'string' && lastSlot.includes('.')) {
+    endHour = parseInt(lastSlot.split('.')[0]);
+    endMinute = 30;
+  } else {
+    endHour = parseInt(lastSlot);
+    endMinute = 0;
+  }
+  const nextMinute = endMinute === 0 ? 30 : 0;
+  const nextHour = endMinute === 0 ? endHour : endHour + 1;
+  const endTime = `${String(nextHour).padStart(2, '0')}:${String(nextMinute).toString().padStart(2, '0')}`;
+
+  document.getElementById('modalTitle').textContent = slots.length > 1 ? `批量编辑 (${slots.length}个时段)` : '编辑时间块';
+  document.getElementById('timeHint').textContent = `${startTime} - ${endTime}`;
+
+  // Pre-fill with first slot's data if exists
+  const firstActivity = dayData[sorted[0]];
+  document.getElementById('activityInput').value = firstActivity ? firstActivity.text : '';
+  document.getElementById('noteInput').value = firstActivity ? (firstActivity.note || '') : '';
+  document.getElementById('deleteBtn').style.display = slots.length === 1 && firstActivity && firstActivity.text ? 'block' : 'none';
+
+  renderColorPicker(firstActivity ? firstActivity.color : null);
   document.getElementById('modal').classList.add('active');
   setTimeout(() => {
     const input = document.getElementById('activityInput');
     input.focus();
+    input.select();
   }, 150);
 }
 
 function renderColorPicker(selected) {
   const picker = document.getElementById('colorPicker');
   picker.innerHTML = COLORS.map(c =>
-    `<div class="color-option ${c === selected ? 'selected' : ''}" style="background:${c}" data-color="${c}"></div>`
+    `<div class="color-option ${c === selected ? 'selected' : ''}" style="background:${c}" data-color="${c}" title="${COLOR_LABELS[c] || ''}"></div>`
   ).join('');
 
   picker.querySelectorAll('.color-option').forEach(el => {
@@ -1032,7 +1343,7 @@ function renderColorPicker(selected) {
 
 function closeModal() {
   document.getElementById('modal').classList.remove('active');
-  editingSlot = null;
+  editingSlots = [];
 }
 
 function saveActivity() {
@@ -1046,13 +1357,16 @@ function saveActivity() {
     return;
   }
 
-  dayData[editingSlot] = { text, note, color };
+  editingSlots.forEach(slot => {
+    dayData[slot] = { text, note, color };
+  });
+
   showLoading(true);
   saveToFirebase().then(() => {
     showLoading(false);
     renderAll();
     closeModal();
-    showToast('已保存');
+    showToast(`已保存 ${editingSlots.length} 个时段`);
   }).catch(() => {
     showLoading(false);
     renderAll();
@@ -1062,7 +1376,8 @@ function saveActivity() {
 }
 
 function deleteActivity() {
-  delete dayData[editingSlot];
+  if (editingSlots.length !== 1) return;
+  delete dayData[editingSlots[0]];
   showLoading(true);
   saveToFirebase().then(() => {
     showLoading(false);
@@ -1105,6 +1420,7 @@ function importData(file) {
 }
 
 function clearToday() {
+  if (!currentUser) { showToast('请先登录'); return; }
   if (confirm('确定要清空今天的所有记录吗？')) {
     dayData = {};
     showLoading(true);
@@ -1127,30 +1443,35 @@ document.getElementById('sleepHeader').addEventListener('click', (e) => {
   renderSleepBlock();
 });
 
-// Time block clicks
+// Click handlers for sleep activities
 document.getElementById('sleepActivities').addEventListener('click', (e) => {
   const editBtn = e.target.closest('.edit-btn');
   if (editBtn) {
     e.stopPropagation();
-    openModal(editBtn.dataset.slot);
+    editingSlots = [editBtn.dataset.slot];
+    openModalForSlots(editingSlots);
     return;
   }
   const content = e.target.closest('.time-content');
-  if (content) {
-    openModal(content.dataset.slot);
+  if (content && !isDragging) {
+    editingSlots = [content.dataset.slot];
+    openModalForSlots(editingSlots);
   }
 });
 
+// Click handlers for time blocks
 document.getElementById('timeBlocks').addEventListener('click', (e) => {
   const editBtn = e.target.closest('.edit-btn');
   if (editBtn) {
     e.stopPropagation();
-    openModal(editBtn.dataset.slot);
+    editingSlots = [editBtn.dataset.slot];
+    openModalForSlots(editingSlots);
     return;
   }
   const content = e.target.closest('.time-content');
-  if (content) {
-    openModal(content.dataset.slot);
+  if (content && !isDragging) {
+    editingSlots = [content.dataset.slot];
+    openModalForSlots(editingSlots);
   }
 });
 
@@ -1188,8 +1509,16 @@ document.getElementById('modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal') closeModal();
 });
 
+// Login modal
+document.getElementById('loginBtn').addEventListener('click', () => doLogin(document.getElementById('usernameInput').value));
+document.getElementById('usernameInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin(e.target.value);
+});
+
+document.getElementById('userName').addEventListener('click', switchUser);
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') { closeModal(); hideLoginModal(); }
   if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active')) {
     if (e.target.tagName !== 'TEXTAREA') saveActivity();
   }
@@ -1197,7 +1526,14 @@ document.addEventListener('keydown', (e) => {
 
 // Init
 document.getElementById('currentDate').textContent = formatDate(currentDate);
-initFirebase();
+const savedUser = localStorage.getItem('tt_username');
+if (savedUser && isValidUsername(savedUser)) {
+  currentUser = savedUser;
+  document.getElementById('userName').textContent = savedUser;
+  connectToFirebase(savedUser);
+} else {
+  showLoginModal();
+}
 </script>
 </body>
 </html>
