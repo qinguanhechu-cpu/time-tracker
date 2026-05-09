@@ -6,26 +6,30 @@
 <title>时间块记录</title>
 <style>
   :root {
-    --bg: #f5f5f5;
+    --bg: #f0f2f5;
     --card-bg: #ffffff;
     --text: #1a1a1a;
-    --text-light: #666666;
-    --border: #e0e0e0;
-    --primary: #4a90d9;
-    --primary-light: #e8f0fe;
-    --hover: #f0f0f0;
-    --shadow: 0 1px 3px rgba(0,0,0,0.1);
-    --radius: 8px;
+    --text-light: #8c8c8c;
+    --border: #e8e8e8;
+    --primary: #4a6cf7;
+    --primary-light: rgba(74,108,247,0.08);
+    --hover: #f5f5f5;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.1);
+    --radius: 10px;
+    --sleep-bg: #e8ecf4;
+    --sleep-text: #9ca3af;
   }
 
   * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.5;
@@ -33,7 +37,7 @@
   }
 
   .container {
-    max-width: 800px;
+    max-width: 680px;
     margin: 0 auto;
     padding: 16px;
   }
@@ -43,61 +47,129 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 16px;
   }
 
   h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.5px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+
+  .sync-status {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sync-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #52c41a;
+    display: inline-block;
+  }
+
+  .sync-dot.offline {
+    background: #faad14;
+  }
+
+  .sync-dot.error {
+    background: #ff4d4f;
   }
 
   .date-nav {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 4px;
+    box-shadow: var(--shadow);
   }
 
   .date-nav button {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s;
+    font-size: 0.85rem;
+    color: var(--text);
+    transition: all 0.15s;
   }
 
   .date-nav button:hover {
-    background: var(--hover);
+    background: var(--primary-light);
+    color: var(--primary);
   }
 
   .date-nav .current-date {
-    font-weight: 500;
-    min-width: 120px;
+    font-weight: 600;
+    min-width: 110px;
     text-align: center;
+    font-size: 0.85rem;
+    padding: 0 4px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+
+  .stat-card .label {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    letter-spacing: 0.3px;
+  }
+
+  .stat-card .value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 2px;
+    color: var(--primary);
   }
 
   .actions {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    margin-bottom: 16px;
   }
 
   .actions button {
+    flex: 1;
     background: var(--primary);
     color: white;
     border: none;
     border-radius: var(--radius);
-    padding: 8px 16px;
+    padding: 10px 12px;
     cursor: pointer;
-    font-size: 0.85rem;
-    transition: opacity 0.2s;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s;
   }
 
   .actions button:hover {
-    opacity: 0.85;
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .actions button:active {
+    transform: translateY(0);
   }
 
   .actions button.secondary {
@@ -106,33 +178,87 @@
     border: 1px solid var(--border);
   }
 
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
+  .actions button.secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
   }
 
-  .stat-card {
+  .actions button.danger {
     background: var(--card-bg);
-    border-radius: var(--radius);
-    padding: 12px;
-    box-shadow: var(--shadow);
+    color: #ff4d4f;
+    border: 1px solid #ffccc7;
   }
 
-  .stat-card .label {
+  /* Sleep block */
+  .sleep-block {
+    background: var(--sleep-bg);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+  }
+
+  .sleep-block.collapsed {
+    cursor: pointer;
+  }
+
+  .sleep-block.collapsed:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sleep-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sleep-icon {
+    font-size: 1.4rem;
+    width: 40px;
+    height: 40px;
+    background: rgba(74,108,247,0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .sleep-info {
+    flex: 1;
+  }
+
+  .sleep-info .time-range {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .sleep-info .sleep-label {
     font-size: 0.75rem;
     color: var(--text-light);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
-  .stat-card .value {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-top: 4px;
+  .sleep-toggle {
+    font-size: 0.75rem;
+    color: var(--primary);
+    background: rgba(74,108,247,0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
   }
 
+  .sleep-block.collapsed .sleep-activities {
+    display: none;
+  }
+
+  .sleep-activities {
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding: 8px 16px 12px;
+  }
+
+  /* Time blocks container */
   .time-blocks {
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -140,10 +266,22 @@
     overflow: hidden;
   }
 
+  .period-label {
+    padding: 10px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-light);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
   .time-block {
     display: flex;
     border-bottom: 1px solid var(--border);
     transition: background 0.15s;
+    min-height: 44px;
   }
 
   .time-block:last-child {
@@ -155,9 +293,9 @@
   }
 
   .time-label {
-    width: 80px;
-    padding: 12px;
-    font-size: 0.85rem;
+    width: 56px;
+    padding: 10px 8px;
+    font-size: 0.75rem;
     color: var(--text-light);
     border-right: 1px solid var(--border);
     text-align: right;
@@ -165,23 +303,35 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    font-weight: 500;
   }
 
   .time-content {
     flex: 1;
-    padding: 12px;
-    min-height: 48px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
     cursor: pointer;
+    min-height: 44px;
+    transition: all 0.15s;
   }
 
   .time-content.empty {
-    color: #ccc;
+    color: #d9d9d9;
   }
 
   .time-content.empty::after {
-    content: "+ 点击添加";
+    content: "+";
+    font-size: 1.1rem;
+  }
+
+  .time-content.empty:hover {
+    background: var(--primary-light);
+  }
+
+  .time-content.filled {
+    border-left: 3px solid var(--block-color, var(--primary));
+    background: var(--block-bg, var(--primary-light));
   }
 
   .time-content .activity {
@@ -189,32 +339,42 @@
     align-items: center;
     gap: 8px;
     width: 100%;
-  }
-
-  .time-content .activity-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
+    overflow: hidden;
   }
 
   .time-content .activity-text {
     flex: 1;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .time-content .activity-note {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
   }
 
   .time-content .edit-btn {
-    opacity: 0;
     background: none;
     border: none;
     color: var(--text-light);
     cursor: pointer;
-    font-size: 0.8rem;
-    padding: 4px 8px;
-    transition: opacity 0.15s;
+    font-size: 0.75rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    flex-shrink: 0;
   }
 
-  .time-block:hover .edit-btn {
-    opacity: 1;
+  .time-content .edit-btn:hover {
+    background: rgba(0,0,0,0.05);
+    color: var(--text);
   }
 
   /* Modal */
@@ -222,11 +382,12 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.45);
     z-index: 100;
     align-items: center;
     justify-content: center;
     padding: 16px;
+    backdrop-filter: blur(2px);
   }
 
   .modal-overlay.active {
@@ -235,51 +396,68 @@
 
   .modal {
     background: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 24px;
     width: 100%;
-    max-width: 400px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
   }
 
   .modal h2 {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .modal .time-hint {
+    font-size: 0.8rem;
+    color: var(--text-light);
     margin-bottom: 16px;
   }
 
   .modal input, .modal textarea {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
     font-size: 0.95rem;
     margin-bottom: 12px;
     font-family: inherit;
+    transition: border-color 0.2s;
   }
 
   .modal textarea {
     resize: vertical;
-    min-height: 80px;
+    min-height: 60px;
   }
 
   .modal input:focus, .modal textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+
+  .modal input::placeholder {
+    color: #bbb;
   }
 
   .modal .color-picker {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
   }
 
   .modal .color-option {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    border: 2px solid transparent;
+    border: 2.5px solid transparent;
     cursor: pointer;
     transition: transform 0.15s;
   }
@@ -290,6 +468,7 @@
 
   .modal .color-option.selected {
     border-color: var(--text);
+    box-shadow: 0 0 0 2px var(--card-bg);
   }
 
   .modal-actions {
@@ -302,8 +481,10 @@
     padding: 8px 20px;
     border-radius: var(--radius);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 500;
     border: none;
+    transition: all 0.15s;
   }
 
   .modal-actions .save {
@@ -311,30 +492,44 @@
     color: white;
   }
 
+  .modal-actions .save:hover {
+    opacity: 0.9;
+  }
+
   .modal-actions .cancel {
     background: var(--hover);
     color: var(--text);
   }
 
+  .modal-actions .cancel:hover {
+    background: var(--border);
+  }
+
   .modal-actions .delete {
-    background: #ff4d4f;
-    color: white;
+    background: transparent;
+    color: #ff4d4f;
     margin-right: auto;
+    border: 1px solid #ffccc7;
+  }
+
+  .modal-actions .delete:hover {
+    background: #fff2f0;
   }
 
   /* Toast */
   .toast {
     position: fixed;
-    bottom: 20px;
+    bottom: 24px;
     left: 50%;
-    transform: translateX(-50%) translateY(100px);
+    transform: translateX(-50%) translateY(80px);
     background: #333;
     color: white;
     padding: 10px 20px;
-    border-radius: var(--radius);
-    font-size: 0.9rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
     z-index: 200;
-    transition: transform 0.3s;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
   }
 
   .toast.show {
@@ -346,19 +541,50 @@
     display: none;
   }
 
+  /* Loading state */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.8);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .loading-overlay.active {
+    display: flex;
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
   /* Responsive */
-  @media (max-width: 600px) {
+  @media (max-width: 500px) {
     .container {
       padding: 12px;
     }
 
     h1 {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
     }
 
     header {
       flex-direction: column;
       align-items: flex-start;
+      gap: 8px;
     }
 
     .date-nav {
@@ -366,34 +592,51 @@
       justify-content: center;
     }
 
-    .actions {
-      width: 100%;
+    .stats {
+      gap: 8px;
+    }
+
+    .stat-card {
+      padding: 10px 8px;
+    }
+
+    .stat-card .value {
+      font-size: 1.1rem;
     }
 
     .actions button {
-      flex: 1;
-      text-align: center;
-      padding: 10px 8px;
-      font-size: 0.8rem;
-    }
-
-    .stats {
-      grid-template-columns: repeat(2, 1fr);
+      padding: 9px 8px;
+      font-size: 0.75rem;
     }
 
     .time-label {
-      width: 60px;
-      font-size: 0.75rem;
-      padding: 10px 8px;
+      width: 48px;
+      font-size: 0.7rem;
+      padding: 8px 6px;
     }
 
     .time-content {
-      padding: 10px 8px;
-      min-height: 44px;
+      padding: 8px 10px;
+      min-height: 40px;
+    }
+
+    .time-content .activity-text {
+      font-size: 0.8rem;
     }
 
     .time-content .edit-btn {
       opacity: 1;
+      padding: 4px;
+    }
+
+    .sleep-header {
+      padding: 12px 14px;
+    }
+
+    .sleep-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 1.2rem;
     }
   }
 </style>
@@ -401,7 +644,13 @@
 <body>
 <div class="container">
   <header>
-    <h1>时间块记录</h1>
+    <div>
+      <h1>时间记录</h1>
+      <div class="sync-status">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncText">连接中...</span>
+      </div>
+    </div>
     <div class="date-nav">
       <button id="prevDay">&lt;</button>
       <span class="current-date" id="currentDate"></span>
@@ -426,9 +675,21 @@
   </div>
 
   <div class="actions">
-    <button id="exportBtn">导出数据</button>
-    <button class="secondary" id="importBtn">导入数据</button>
-    <button class="secondary" id="clearBtn">清空今日</button>
+    <button class="secondary" id="exportBtn">导出</button>
+    <button class="secondary" id="importBtn">导入</button>
+    <button class="danger" id="clearBtn">清空</button>
+  </div>
+
+  <div class="sleep-block collapsed" id="sleepBlock">
+    <div class="sleep-header" id="sleepHeader">
+      <div class="sleep-icon">&#127769;</div>
+      <div class="sleep-info">
+        <div class="time-range">02:00 - 08:00</div>
+        <div class="sleep-label">睡眠时段</div>
+      </div>
+      <div class="sleep-toggle">展开</div>
+    </div>
+    <div class="sleep-activities" id="sleepActivities"></div>
   </div>
 
   <div class="time-blocks" id="timeBlocks"></div>
@@ -438,7 +699,8 @@
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h2 id="modalTitle">编辑时间块</h2>
-    <input type="text" id="activityInput" placeholder="输入你做了什么..." maxlength="100">
+    <div class="time-hint" id="timeHint"></div>
+    <input type="text" id="activityInput" placeholder="输入你做了什么..." maxlength="100" autocomplete="off">
     <textarea id="noteInput" placeholder="备注（可选）" maxlength="500"></textarea>
     <div class="color-picker" id="colorPicker"></div>
     <div class="modal-actions">
@@ -452,19 +714,46 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:0.85rem;color:var(--text-light)">同步数据中...</div>
+</div>
+
 <!-- Hidden import input -->
 <input type="file" id="importInput" accept=".json">
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBds0R-1ks9VZnO6iEUM-el94E77dzHEWU",
+  authDomain: "time-tracker-a9acb.firebaseapp.com",
+  projectId: "time-tracker-a9acb",
+  storageBucket: "time-tracker-a9acb.firebasestorage.app",
+  messagingSenderId: "843669525828",
+  appId: "1:843669525828:web:ff62cd807fbad05000b311",
+  measurementId: "G-F531WV6NL4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const COLORS = [
-  '#4a90d9', '#50c878', '#ff6b6b', '#ffa94d',
+  '#4a6cf7', '#50c878', '#ff6b6b', '#ffa94d',
   '#9775fa', '#f06595', '#3bc9db', '#ffd43b',
   '#69db7c', '#e599f7', '#74c0fc', '#ff8787'
 ];
 
+const SLEEP_START = 2;
+const SLEEP_END = 8;
+
 let currentDate = new Date();
-let data = {};
-let editingHour = null;
+let dayData = {};
+let editingSlot = null;
+let isSleepExpanded = false;
+let firebaseUserId = 'default';
 
 function getDateKey(date) {
   return date.toISOString().split('T')[0];
@@ -479,90 +768,252 @@ function formatDate(date) {
   return `${y}-${m}-${d} ${w}`;
 }
 
-function loadData() {
-  const stored = localStorage.getItem('timeTrackerData');
-  if (stored) {
-    try {
-      data = JSON.parse(stored);
-    } catch (e) {
-      data = {};
-    }
-  }
-}
-
-function saveData() {
-  localStorage.setItem('timeTrackerData', JSON.stringify(data));
-}
-
-function getDayData(date) {
-  const key = getDateKey(date);
-  if (!data[key]) {
-    data[key] = {};
-  }
-  return data[key];
-}
-
-function renderBlocks() {
-  const container = document.getElementById('timeBlocks');
-  const dayData = getDayData(currentDate);
-  container.innerHTML = '';
-
-  for (let i = 0; i < 24; i++) {
-    const hour = String(i).padStart(2, '0');
-    const nextHour = String(i + 1).padStart(2, '0');
-    const block = document.createElement('div');
-    block.className = 'time-block';
-
-    const activity = dayData[i];
-    const hasContent = activity && activity.text;
-
-    block.innerHTML = `
-      <div class="time-label">${hour}:00</div>
-      <div class="time-content ${hasContent ? '' : 'empty'}" data-hour="${i}">
-        ${hasContent ? `
-          <div class="activity">
-            <span class="activity-dot" style="background:${activity.color || '#4a90d9'}"></span>
-            <span class="activity-text">${escapeHtml(activity.text)}${activity.note ? ' <small style="color:#999">(' + escapeHtml(activity.note) + ')</small>' : ''}</span>
-            <button class="edit-btn" data-hour="${i}">编辑</button>
-          </div>
-        ` : ''}
-      </div>
-    `;
-
-    container.appendChild(block);
-  }
-
-  updateStats();
-}
-
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-function updateStats() {
-  const dayData = getDayData(currentDate);
-  const entries = Object.values(dayData).filter(e => e && e.text);
-  const recorded = entries.length;
-  document.getElementById('statRecorded').textContent = `${recorded}h`;
-  document.getElementById('statEmpty').textContent = `${24 - recorded}h`;
-  document.getElementById('statActivities').textContent = entries.length;
+function setSyncStatus(status, text) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  dot.className = 'sync-dot';
+  if (status === 'online') {
+    dot.style.background = '#52c41a';
+  } else if (status === 'offline') {
+    dot.style.background = '#faad14';
+  } else {
+    dot.style.background = '#ff4d4f';
+  }
+  txt.textContent = text;
 }
 
-function openModal(hour) {
-  editingHour = hour;
-  const dayData = getDayData(currentDate);
-  const activity = dayData[hour];
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('active', show);
+}
 
-  document.getElementById('modalTitle').textContent = `编辑 ${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function initFirebase() {
+  // Try to get a user ID from localStorage or generate one
+  firebaseUserId = localStorage.getItem('tt_userId') || 'user_' + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem('tt_userId', firebaseUserId);
+
+  const dataRef = doc(db, 'timeData', firebaseUserId);
+
+  // Listen for real-time updates
+  onSnapshot(dataRef, (snap) => {
+    if (snap.exists()) {
+      dayData = snap.data();
+      setSyncStatus('online', '已同步');
+    } else {
+      dayData = {};
+      setSyncStatus('online', '已同步');
+    }
+    renderAll();
+  }, (error) => {
+    console.error('Firebase error:', error);
+    setSyncStatus('error', '同步失败');
+    // Fall back to localStorage
+    loadLocalData();
+    renderAll();
+  });
+
+  setSyncStatus('online', '连接中...');
+}
+
+function loadLocalData() {
+  const stored = localStorage.getItem('timeTrackerData');
+  if (stored) {
+    try {
+      const allData = JSON.parse(stored);
+      const key = getDateKey(currentDate);
+      dayData = allData[key] || {};
+    } catch (e) {
+      dayData = {};
+    }
+  }
+}
+
+async function saveToFirebase() {
+  try {
+    const dataRef = doc(db, 'timeData', firebaseUserId);
+    await setDoc(dataRef, dayData);
+    // Also save to localStorage as backup
+    saveToLocal();
+  } catch (e) {
+    console.error('Save error:', e);
+    saveToLocal();
+    showToast('云端保存失败，已存本地');
+  }
+}
+
+function saveToLocal() {
+  const key = getDateKey(currentDate);
+  let allData = {};
+  const stored = localStorage.getItem('timeTrackerData');
+  if (stored) {
+    try { allData = JSON.parse(stored); } catch (e) {}
+  }
+  allData[key] = dayData;
+  localStorage.setItem('timeTrackerData', JSON.stringify(allData));
+}
+
+function renderAll() {
+  renderSleepBlock();
+  renderTimeBlocks();
+  updateStats();
+}
+
+function renderSleepBlock() {
+  const block = document.getElementById('sleepBlock');
+  const activitiesDiv = document.getElementById('sleepActivities');
+  const toggle = block.querySelector('.sleep-toggle');
+
+  block.classList.toggle('collapsed', !isSleepExpanded);
+  toggle.textContent = isSleepExpanded ? '收起' : '展开';
+
+  // Count filled sleep slots
+  let filledCount = 0;
+  for (let i = SLEEP_START; i < SLEEP_END; i++) {
+    if (dayData[i] && dayData[i].text) filledCount++;
+  }
+
+  const sleepLabel = block.querySelector('.sleep-label');
+  if (filledCount === 0) {
+    sleepLabel.textContent = '睡眠时段 · 点击展开记录';
+  } else if (filledCount === (SLEEP_END - SLEEP_START) * 2) {
+    sleepLabel.textContent = `睡眠时段 · 已全部记录 (${SLEEP_END - SLEEP_START}小时)`;
+  } else {
+    sleepLabel.textContent = `睡眠时段 · 已记录 ${filledCount} 个时段`;
+  }
+
+  // Render sleep activities
+  activitiesDiv.innerHTML = '';
+  for (let i = SLEEP_START; i < SLEEP_END; i++) {
+    // Hour block
+    const hourActivity = dayData[i];
+    const halfHourActivity = dayData[i + '.5'];
+
+    [
+      { slot: i, label: `${String(i).padStart(2, '0')}:00`, activity: hourActivity },
+      { slot: i + '.5', label: `${String(i).padStart(2, '0')}:30`, activity: halfHourActivity }
+    ].forEach(({ slot, label, activity }) => {
+      const hasContent = activity && activity.text;
+      const div = document.createElement('div');
+      div.className = `time-block`;
+      div.innerHTML = `
+        <div class="time-label">${label}</div>
+        <div class="time-content ${hasContent ? 'filled' : 'empty'}" data-slot="${slot}" style="${hasContent ? `--block-color:${activity.color};--block-bg:${activity.color}15` : ''}">
+          ${hasContent ? `
+            <div class="activity">
+              <span class="activity-text">${escapeHtml(activity.text)}</span>
+              ${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}
+              <button class="edit-btn" data-slot="${slot}">&#9998;</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      activitiesDiv.appendChild(div);
+    });
+  }
+}
+
+function renderTimeBlocks() {
+  const container = document.getElementById('timeBlocks');
+  container.innerHTML = '';
+
+  const periods = [
+    { label: '上午', start: 8, end: 12 },
+    { label: '下午', start: 12, end: 18 },
+    { label: '晚上', start: 18, end: 24 },
+    { label: '凌晨', start: 0, end: 2 }
+  ];
+
+  periods.forEach(({ label, start, end }) => {
+    // Period header
+    const header = document.createElement('div');
+    header.className = 'period-label';
+    header.textContent = label;
+    container.appendChild(header);
+
+    for (let i = start; i < end; i++) {
+      // Full hour
+      const hourActivity = dayData[i];
+      const halfHourActivity = dayData[i + '.5'];
+
+      [
+        { slot: i, label: `${String(i).padStart(2, '0')}:00`, activity: hourActivity },
+        { slot: i + '.5', label: `${String(i).padStart(2, '0')}:30`, activity: halfHourActivity }
+      ].forEach(({ slot, label, activity }) => {
+        const hasContent = activity && activity.text;
+        const block = document.createElement('div');
+        block.className = 'time-block';
+        block.innerHTML = `
+          <div class="time-label">${label}</div>
+          <div class="time-content ${hasContent ? 'filled' : 'empty'}" data-slot="${slot}" style="${hasContent ? `--block-color:${activity.color};--block-bg:${activity.color}15` : ''}">
+            ${hasContent ? `
+              <div class="activity">
+                <span class="activity-text">${escapeHtml(activity.text)}</span>
+                ${activity.note ? `<span class="activity-note">${escapeHtml(activity.note)}</span>` : ''}
+                <button class="edit-btn" data-slot="${slot}">&#9998;</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(block);
+      });
+    }
+  });
+}
+
+function updateStats() {
+  // Count all 48 half-hour slots
+  let filledCount = 0;
+  for (let i = 0; i < 24; i++) {
+    if (dayData[i] && dayData[i].text) filledCount++;
+    if (dayData[i + '.5'] && dayData[i + '.5'].text) filledCount++;
+  }
+  const recordedHours = filledCount * 0.5;
+  document.getElementById('statRecorded').textContent = recordedHours % 1 === 0 ? `${recordedHours}h` : `${recordedHours.toFixed(1)}h`;
+  document.getElementById('statEmpty').textContent = `${(24 - recordedHours) % 1 === 0 ? (24 - recordedHours) : (24 - recordedHours).toFixed(1)}h`;
+  document.getElementById('statActivities').textContent = filledCount;
+}
+
+function openModal(slot) {
+  editingSlot = slot;
+  const activity = dayData[slot];
+
+  // Parse slot
+  let hour, minute;
+  if (typeof slot === 'string' && slot.includes('.')) {
+    hour = parseInt(slot.split('.')[0]);
+    minute = 30;
+  } else {
+    hour = parseInt(slot);
+    minute = 0;
+  }
+  const nextMinute = minute === 0 ? 30 : 0;
+  const nextHour = minute === 0 ? hour : hour + 1;
+
+  document.getElementById('modalTitle').textContent = '编辑时间块';
+  document.getElementById('timeHint').textContent =
+    `${String(hour).padStart(2, '0')}:${String(minute).toString().padStart(2, '0')} - ${String(nextHour).padStart(2, '0')}:${String(nextMinute).toString().padStart(2, '0')}`;
   document.getElementById('activityInput').value = activity ? activity.text : '';
   document.getElementById('noteInput').value = activity ? (activity.note || '') : '';
   document.getElementById('deleteBtn').style.display = activity && activity.text ? 'block' : 'none';
 
   renderColorPicker(activity ? activity.color : null);
   document.getElementById('modal').classList.add('active');
-  setTimeout(() => document.getElementById('activityInput').focus(), 100);
+  setTimeout(() => {
+    const input = document.getElementById('activityInput');
+    input.focus();
+  }, 150);
 }
 
 function renderColorPicker(selected) {
@@ -581,50 +1032,57 @@ function renderColorPicker(selected) {
 
 function closeModal() {
   document.getElementById('modal').classList.remove('active');
-  editingHour = null;
+  editingSlot = null;
 }
 
 function saveActivity() {
   const text = document.getElementById('activityInput').value.trim();
   const note = document.getElementById('noteInput').value.trim();
   const selectedColor = document.querySelector('#colorPicker .color-option.selected');
-  const color = selectedColor ? selectedColor.dataset.color : '#4a90d9';
+  const color = selectedColor ? selectedColor.dataset.color : '#4a6cf7';
 
   if (!text) {
     showToast('请输入活动内容');
     return;
   }
 
-  const dayData = getDayData(currentDate);
-  dayData[editingHour] = { text, note, color };
-  saveData();
-  renderBlocks();
-  closeModal();
-  showToast('已保存');
+  dayData[editingSlot] = { text, note, color };
+  showLoading(true);
+  saveToFirebase().then(() => {
+    showLoading(false);
+    renderAll();
+    closeModal();
+    showToast('已保存');
+  }).catch(() => {
+    showLoading(false);
+    renderAll();
+    closeModal();
+    showToast('已保存');
+  });
 }
 
 function deleteActivity() {
-  const dayData = getDayData(currentDate);
-  delete dayData[editingHour];
-  saveData();
-  renderBlocks();
-  closeModal();
-  showToast('已删除');
-}
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+  delete dayData[editingSlot];
+  showLoading(true);
+  saveToFirebase().then(() => {
+    showLoading(false);
+    renderAll();
+    closeModal();
+    showToast('已删除');
+  }).catch(() => {
+    showLoading(false);
+    renderAll();
+    closeModal();
+    showToast('已删除');
+  });
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(dayData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `time-tracker-${getDateKey(new Date())}.json`;
+  a.download = `time-tracker-${getDateKey(currentDate)}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('已导出');
@@ -635,10 +1093,9 @@ function importData(file) {
   reader.onload = (e) => {
     try {
       const imported = JSON.parse(e.target.result);
-      // Merge: imported data overwrites existing
-      data = { ...data, ...imported };
-      saveData();
-      renderBlocks();
+      dayData = { ...dayData, ...imported };
+      saveToFirebase();
+      renderAll();
       showToast('导入成功');
     } catch (err) {
       showToast('导入失败：文件格式错误');
@@ -649,46 +1106,74 @@ function importData(file) {
 
 function clearToday() {
   if (confirm('确定要清空今天的所有记录吗？')) {
-    const key = getDateKey(currentDate);
-    data[key] = {};
-    saveData();
-    renderBlocks();
-    showToast('已清空');
+    dayData = {};
+    showLoading(true);
+    saveToFirebase().then(() => {
+      showLoading(false);
+      renderAll();
+      showToast('已清空');
+    }).catch(() => {
+      showLoading(false);
+      renderAll();
+      showToast('已清空');
+    });
   }
 }
 
-// Event listeners
-document.getElementById('timeBlocks').addEventListener('click', (e) => {
+// Sleep block toggle
+document.getElementById('sleepHeader').addEventListener('click', (e) => {
+  if (e.target.closest('.edit-btn') || e.target.closest('.time-content')) return;
+  isSleepExpanded = !isSleepExpanded;
+  renderSleepBlock();
+});
+
+// Time block clicks
+document.getElementById('sleepActivities').addEventListener('click', (e) => {
   const editBtn = e.target.closest('.edit-btn');
   if (editBtn) {
     e.stopPropagation();
-    openModal(parseInt(editBtn.dataset.hour));
+    openModal(editBtn.dataset.slot);
     return;
   }
   const content = e.target.closest('.time-content');
   if (content) {
-    openModal(parseInt(content.dataset.hour));
+    openModal(content.dataset.slot);
   }
 });
 
+document.getElementById('timeBlocks').addEventListener('click', (e) => {
+  const editBtn = e.target.closest('.edit-btn');
+  if (editBtn) {
+    e.stopPropagation();
+    openModal(editBtn.dataset.slot);
+    return;
+  }
+  const content = e.target.closest('.time-content');
+  if (content) {
+    openModal(content.dataset.slot);
+  }
+});
+
+// Date navigation
 document.getElementById('prevDay').addEventListener('click', () => {
   currentDate.setDate(currentDate.getDate() - 1);
   document.getElementById('currentDate').textContent = formatDate(currentDate);
-  renderBlocks();
+  renderAll();
 });
 
 document.getElementById('nextDay').addEventListener('click', () => {
   currentDate.setDate(currentDate.getDate() + 1);
   document.getElementById('currentDate').textContent = formatDate(currentDate);
-  renderBlocks();
+  renderAll();
 });
 
 document.getElementById('todayBtn').addEventListener('click', () => {
   currentDate = new Date();
   document.getElementById('currentDate').textContent = formatDate(currentDate);
-  renderBlocks();
+  renderAll();
 });
 
+// Modal buttons
 document.getElementById('saveBtn').addEventListener('click', saveActivity);
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
 document.getElementById('deleteBtn').addEventListener('click', deleteActivity);
@@ -712,8 +1197,7 @@ document.addEventListener('keydown', (e) => {
 
 // Init
 document.getElementById('currentDate').textContent = formatDate(currentDate);
-loadData();
-renderBlocks();
+initFirebase();
 </script>
 </body>
 </html>
