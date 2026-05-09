@@ -862,6 +862,7 @@ let unsubscribe = null;
 let isDragging = false;
 let dragStartSlot = null;
 let dragSlots = new Set();
+let dragJustEnded = false;
 
 function getDateKey(date) { return date.toISOString().split('T')[0]; }
 
@@ -982,6 +983,7 @@ function renderAll() {
   renderSleepBlock();
   renderTimeBlocks();
   updateStats();
+  setupDragListeners(document.getElementById('sleepActivities'));
 }
 
 // ===== PIE CHART =====
@@ -1185,12 +1187,6 @@ function setupDragListeners(container) {
       startDrag(el.dataset.slot);
     });
 
-    el.addEventListener('mouseenter', () => {
-      if (isDragging) {
-        updateDragSelection(el.dataset.slot);
-      }
-    });
-
     el.addEventListener('touchstart', (e) => {
       if (e.target.closest('.edit-btn')) return;
       e.preventDefault();
@@ -1198,6 +1194,17 @@ function setupDragListeners(container) {
     }, { passive: false });
   });
 
+  // Mouse move tracking for desktop drag
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (el) {
+      const content = el.closest('.time-content');
+      if (content) updateDragSelection(content.dataset.slot);
+    }
+  });
+
+  // Touch move tracking for mobile drag
   document.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
     const touch = e.touches[0];
@@ -1253,6 +1260,7 @@ function highlightDragSlots() {
 function endDrag() {
   if (!isDragging) return;
   isDragging = false;
+  dragJustEnded = true;
 
   // Remove drag highlights
   document.querySelectorAll('.dragging-over').forEach(el => el.classList.remove('dragging-over'));
@@ -1264,6 +1272,9 @@ function endDrag() {
 
   dragSlots = new Set();
   dragStartSlot = null;
+
+  // Clear the flag after a short delay to prevent click handler from firing
+  setTimeout(() => { dragJustEnded = false; }, 100);
 }
 
 function updateStats() {
@@ -1445,6 +1456,7 @@ document.getElementById('sleepHeader').addEventListener('click', (e) => {
 
 // Click handlers for sleep activities
 document.getElementById('sleepActivities').addEventListener('click', (e) => {
+  if (dragJustEnded) return;
   const editBtn = e.target.closest('.edit-btn');
   if (editBtn) {
     e.stopPropagation();
@@ -1453,7 +1465,7 @@ document.getElementById('sleepActivities').addEventListener('click', (e) => {
     return;
   }
   const content = e.target.closest('.time-content');
-  if (content && !isDragging) {
+  if (content) {
     editingSlots = [content.dataset.slot];
     openModalForSlots(editingSlots);
   }
@@ -1461,6 +1473,7 @@ document.getElementById('sleepActivities').addEventListener('click', (e) => {
 
 // Click handlers for time blocks
 document.getElementById('timeBlocks').addEventListener('click', (e) => {
+  if (dragJustEnded) return;
   const editBtn = e.target.closest('.edit-btn');
   if (editBtn) {
     e.stopPropagation();
@@ -1469,7 +1482,7 @@ document.getElementById('timeBlocks').addEventListener('click', (e) => {
     return;
   }
   const content = e.target.closest('.time-content');
-  if (content && !isDragging) {
+  if (content) {
     editingSlots = [content.dataset.slot];
     openModalForSlots(editingSlots);
   }
