@@ -863,6 +863,8 @@ let isDragging = false;
 let dragStartSlot = null;
 let dragSlots = new Set();
 let dragJustEnded = false;
+let dragStartPosition = null;
+const DRAG_THRESHOLD = 8; // pixels
 
 function getDateKey(date) { return date.toISOString().split('T')[0]; }
 
@@ -1183,20 +1185,38 @@ function setupDragListeners(container) {
   contents.forEach(el => {
     el.addEventListener('mousedown', (e) => {
       if (e.target.closest('.edit-btn')) return;
-      e.preventDefault();
-      startDrag(el.dataset.slot);
+      dragStartPosition = { x: e.clientX, y: e.clientY };
+      dragStartSlot = el.dataset.slot;
     });
 
     el.addEventListener('touchstart', (e) => {
       if (e.target.closest('.edit-btn')) return;
-      e.preventDefault();
-      startDrag(el.dataset.slot);
-    }, { passive: false });
+      const t = e.touches[0];
+      dragStartPosition = { x: t.clientX, y: t.clientY };
+      dragStartSlot = el.dataset.slot;
+    }, { passive: true });
   });
 
   // Mouse move tracking for desktop drag
   document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
+    if (!dragStartPosition || !dragStartSlot) return;
+    const dx = e.clientX - dragStartPosition.x;
+    const dy = e.clientY - dragStartPosition.y;
+    if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+
+    if (!isDragging) {
+      if (!currentUser) {
+        showToast('请先登录');
+        showLoginModal();
+        dragStartPosition = null;
+        dragStartSlot = null;
+        return;
+      }
+      isDragging = true;
+      dragSlots = new Set([dragStartSlot]);
+      highlightDragSlots();
+    }
+
     const el = document.elementFromPoint(e.clientX, e.clientY);
     if (el) {
       const content = el.closest('.time-content');
@@ -1206,9 +1226,26 @@ function setupDragListeners(container) {
 
   // Touch move tracking for mobile drag
   document.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    const touch = e.touches[0];
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!dragStartPosition || !dragStartSlot) return;
+    const t = e.touches[0];
+    const dx = t.clientX - dragStartPosition.x;
+    const dy = t.clientY - dragStartPosition.y;
+    if (Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return;
+
+    if (!isDragging) {
+      if (!currentUser) {
+        showToast('请先登录');
+        showLoginModal();
+        dragStartPosition = null;
+        dragStartSlot = null;
+        return;
+      }
+      isDragging = true;
+      dragSlots = new Set([dragStartSlot]);
+      highlightDragSlots();
+    }
+
+    const el = document.elementFromPoint(t.clientX, t.clientY);
     if (el) {
       const content = el.closest('.time-content');
       if (content) updateDragSelection(content.dataset.slot);
@@ -1217,18 +1254,6 @@ function setupDragListeners(container) {
 
   document.addEventListener('mouseup', endDrag);
   document.addEventListener('touchend', endDrag);
-}
-
-function startDrag(slot) {
-  if (!currentUser) {
-    showToast('请先登录');
-    showLoginModal();
-    return;
-  }
-  isDragging = true;
-  dragStartSlot = slot;
-  dragSlots = new Set([slot]);
-  highlightDragSlots();
 }
 
 function updateDragSelection(currentSlot) {
@@ -1258,23 +1283,24 @@ function highlightDragSlots() {
 }
 
 function endDrag() {
-  if (!isDragging) return;
+  const wasDragging = isDragging;
   isDragging = false;
-  dragJustEnded = true;
 
-  // Remove drag highlights
-  document.querySelectorAll('.dragging-over').forEach(el => el.classList.remove('dragging-over'));
+  if (wasDragging) {
+    dragJustEnded = true;
+    document.querySelectorAll('.dragging-over').forEach(el => el.classList.remove('dragging-over'));
 
-  if (dragSlots.size > 0) {
-    editingSlots = [...dragSlots];
-    openModalForSlots(editingSlots);
+    if (dragSlots.size > 0) {
+      editingSlots = [...dragSlots];
+      openModalForSlots(editingSlots);
+    }
+
+    setTimeout(() => { dragJustEnded = false; }, 100);
   }
 
-  dragSlots = new Set();
+  dragStartPosition = null;
   dragStartSlot = null;
-
-  // Clear the flag after a short delay to prevent click handler from firing
-  setTimeout(() => { dragJustEnded = false; }, 100);
+  dragSlots = new Set();
 }
 
 function updateStats() {
