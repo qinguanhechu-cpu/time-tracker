@@ -374,7 +374,7 @@
 <script>
 const SUPABASE_URL = 'https://jsreyokzmlpwsmlffiqq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_8V8gFZ-RM61be5mVVuE_8g_SfjnRPZO';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const COLORS = ['#50c878', '#4a6cf7', '#ff6b6b', '#9775fa', '#ffd43b', '#ffa94d', '#3bc9db'];
 const COLOR_LABELS = { '#50c878': '工作', '#4a6cf7': '交通', '#ff6b6b': '学习', '#9775fa': '娱乐', '#ffd43b': '输出', '#ffa94d': '生活', '#3bc9db': '休息' };
@@ -452,7 +452,7 @@ function connectToSupabase(username) {
   setSyncStatus('online', '连接中...');
 
   function fetchData() {
-    supabase
+    client
       .from('time_data')
       .select('*')
       .eq('username', username)
@@ -500,7 +500,7 @@ async function saveToFirebase() {
     allCachedDays[getDateKey(currentDate)] = dayData;
     localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
 
-    await supabase
+    await client
       .from('time_data')
       .upsert({ username: currentUser, date: getDateKey(currentDate), data: dayData }, { onConflict: 'username,date' });
   } catch (e) {
