@@ -503,10 +503,17 @@ let longPressTriggered = false;
 const LONG_PRESS_DELAY = 300;
 
 function getDateKey(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  // 凌晨 0:00-2:00 属于前一天的记录周期
+  // 例如：5月11日 01:00 → key 为 2025-05-10（因为这是5月10号 02:00 → 5月11号 02:00 的周期）
+  const h = date.getHours();
+  const d = new Date(date);
+  if (h < 2) {
+    d.setDate(d.getDate() - 1);
+  }
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function formatDate(date) {
@@ -560,69 +567,12 @@ function connectToSupabase(username) {
   if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
   setSyncStatus('online', '连接中...');
 
-  // 一次性修复：把所有云端数据 key 减一天
-  async function fixDateKeys() {
-    const fixFlag = localStorage.getItem('tt_date_fixed_v1_' + username);
-    if (fixFlag) return;
-
-    const { data, error } = await client
-      .from('time_data')
-      .select('*')
-      .eq('username', username);
-
-    if (error || !data || data.length === 0) {
-      localStorage.setItem('tt_date_fixed_v1_' + username, '1');
-      return;
-    }
-
-    const operations = [];
-    for (const row of data) {
-      const oldDate = new Date(row.date + 'T00:00:00');
-      const newDate = new Date(oldDate.getTime() - 24 * 60 * 60 * 1000);
-      const newKey = getDateKey(newDate);
-
-      if (row.date !== newKey) {
-        // 写入新 key
-        operations.push(
-          client.from('time_data').upsert(
-            { username: username, date: newKey, data: row.data },
-            { onConflict: 'username,date' }
-          )
-        );
-      }
-    }
-
-    if (operations.length === 0) {
-      localStorage.setItem('tt_date_fixed_v1_' + username, '1');
-      return;
-    }
-
-    showLoading(true);
-
-    // 先写入所有新 key
-    await Promise.all(operations);
-
-    // 再删除所有旧 key
-    for (const row of data) {
-      const oldDate = new Date(row.date + 'T00:00:00');
-      const newDate = new Date(oldDate.getTime() - 24 * 60 * 60 * 1000);
-      const newKey = getDateKey(newDate);
-      if (row.date !== newKey) {
-        await client.from('time_data').delete().eq('username', username).eq('date', row.date);
-      }
-    }
-
-    localStorage.setItem('tt_date_fixed_v1_' + username, '1');
-    showLoading(false);
-    showToast('日期已修正');
-  }
-
   function fetchData() {
     client
       .from('time_data')
       .select('*')
       .eq('username', username)
-      .then(async ({ data, error }) => {
+      .then(({ data, error }) => {
         if (error) {
           console.error('Supabase error:', error);
           setSyncStatus('error', '同步失败');
@@ -632,20 +582,6 @@ function connectToSupabase(username) {
         if (data && data.length > 0) {
           data.forEach(row => { allCachedDays[row.date] = row.data; });
         }
-
-        // 执行一次日期修正
-        await fixDateKeys();
-
-        // 修正后重新获取
-        const { data: freshData } = await client
-          .from('time_data')
-          .select('*')
-          .eq('username', username);
-        if (freshData) {
-          allCachedDays = {};
-          freshData.forEach(row => { allCachedDays[row.date] = row.data; });
-        }
-
         dayData = allCachedDays[getDateKey(currentDate)] || {};
         setSyncStatus('online', '已同步');
         renderAll();
@@ -1323,7 +1259,12 @@ document.getElementById('nextDay').addEventListener('click', () => {
   switchToDate(d);
 });
 document.getElementById('todayBtn').addEventListener('click', () => {
-  switchToDate(new Date());
+  const now = new Date();
+  const today = new Date(now);
+  if (now.getHours() < 2) {
+    today.setDate(today.getDate() - 1);
+  }
+  switchToDate(today);
 });
 
 // Modal buttons
@@ -1374,6 +1315,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Init
+const initDate = new Date();
+if (initDate.getHours() < 2) {
+  initDate.setDate(initDate.getDate() - 1);
+}
+currentDate = initDate;
 document.getElementById('currentDate').textContent = formatDate(currentDate);
 renderColorLegend();
 const saved = localStorage.getItem('tt_username');
