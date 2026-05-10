@@ -560,69 +560,61 @@ function connectToSupabase(username) {
   if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
   setSyncStatus('online', '连接中...');
 
-  async function migrateUtcToLocal() {
-    const migrationFlag = localStorage.getItem('tt_utc_migrated_v3_' + username);
-    if (migrationFlag) return; // 已迁移过，跳过
+  // 一次性修复：把所有云端数据 key 减一天
+  async function fixDateKeys() {
+    const fixFlag = localStorage.getItem('tt_date_fixed_v1_' + username);
+    if (fixFlag) return;
 
     const { data, error } = await client
       .from('time_data')
       .select('*')
       .eq('username', username);
 
-    if (error || !data || data.length === 0) return;
+    if (error || !data || data.length === 0) {
+      localStorage.setItem('tt_date_fixed_v1_' + username, '1');
+      return;
+    }
 
-    const migrated = {};
-    let hasChanges = false;
-
+    const operations = [];
     for (const row of data) {
-      // 当前 key (被多减了一天)
-      const oldKey = row.date;
-      // 新 key = 旧 key 加一天
-      const oldDate = new Date(oldKey + 'T00:00:00');
-      const newDate = new Date(oldDate.getTime() + 24 * 60 * 60 * 1000);
+      const oldDate = new Date(row.date + 'T00:00:00');
+      const newDate = new Date(oldDate.getTime() - 24 * 60 * 60 * 1000);
       const newKey = getDateKey(newDate);
 
-      if (oldKey !== newKey) {
-        // 需要迁移
-        if (!migrated[newKey]) {
-          migrated[newKey] = row.data;
-        } else {
-          // 如果目标 key 已有数据，合并（保留已有数据优先）
-          migrated[newKey] = { ...row.data, ...migrated[newKey] };
-        }
-        // 标记删除旧 key
-        migrated[oldKey] = null;
-        hasChanges = true;
+      if (row.date !== newKey) {
+        // 写入新 key
+        operations.push(
+          client.from('time_data').upsert(
+            { username: username, date: newKey, data: row.data },
+            { onConflict: 'username,date' }
+          )
+        );
       }
     }
 
-    if (!hasChanges) {
-      localStorage.setItem('tt_utc_migrated_v3_' + username, '1');
+    if (operations.length === 0) {
+      localStorage.setItem('tt_date_fixed_v1_' + username, '1');
       return;
     }
 
     showLoading(true);
 
-    // 写入新的 key
-    for (const [key, data] of Object.entries(migrated)) {
-      if (data !== null) {
-        await client.from('time_data').upsert(
-          { username: username, date: key, data: data },
-          { onConflict: 'username,date' }
-        );
+    // 先写入所有新 key
+    await Promise.all(operations);
+
+    // 再删除所有旧 key
+    for (const row of data) {
+      const oldDate = new Date(row.date + 'T00:00:00');
+      const newDate = new Date(oldDate.getTime() - 24 * 60 * 60 * 1000);
+      const newKey = getDateKey(newDate);
+      if (row.date !== newKey) {
+        await client.from('time_data').delete().eq('username', username).eq('date', row.date);
       }
     }
 
-    // 删除旧的 key
-    for (const [key, data] of Object.entries(migrated)) {
-      if (data === null) {
-        await client.from('time_data').delete().eq('username', username).eq('date', key);
-      }
-    }
-
-    localStorage.setItem('tt_utc_migrated_v3_' + username, '1');
+    localStorage.setItem('tt_date_fixed_v1_' + username, '1');
     showLoading(false);
-    showToast('日期格式已更新');
+    showToast('日期已修正');
   }
 
   function fetchData() {
@@ -641,10 +633,10 @@ function connectToSupabase(username) {
           data.forEach(row => { allCachedDays[row.date] = row.data; });
         }
 
-        // 首次登录后执行迁移
-        await migrateUtcToLocal();
+        // 执行一次日期修正
+        await fixDateKeys();
 
-        // 迁移后重新获取数据
+        // 修正后重新获取
         const { data: freshData } = await client
           .from('time_data')
           .select('*')
