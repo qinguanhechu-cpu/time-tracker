@@ -502,7 +502,12 @@ let longPressTimer = null;
 let longPressTriggered = false;
 const LONG_PRESS_DELAY = 300;
 
-function getDateKey(date) { return date.toISOString().split('T')[0]; }
+function getDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 function formatDate(date) {
   const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -555,12 +560,77 @@ function connectToSupabase(username) {
   if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
   setSyncStatus('online', '连接中...');
 
+  async function migrateUtcToLocal() {
+    const migrationFlag = localStorage.getItem('tt_utc_migrated_v3_' + username);
+    if (migrationFlag) return; // 已迁移过，跳过
+
+    const { data, error } = await client
+      .from('time_data')
+      .select('*')
+      .eq('username', username);
+
+    if (error || !data || data.length === 0) return;
+
+    const migrated = {};
+    let hasChanges = false;
+
+    for (const row of data) {
+      // 当前 key (被多减了一天)
+      const oldKey = row.date;
+      // 新 key = 旧 key 加一天
+      const oldDate = new Date(oldKey + 'T00:00:00');
+      const newDate = new Date(oldDate.getTime() + 24 * 60 * 60 * 1000);
+      const newKey = getDateKey(newDate);
+
+      if (oldKey !== newKey) {
+        // 需要迁移
+        if (!migrated[newKey]) {
+          migrated[newKey] = row.data;
+        } else {
+          // 如果目标 key 已有数据，合并（保留已有数据优先）
+          migrated[newKey] = { ...row.data, ...migrated[newKey] };
+        }
+        // 标记删除旧 key
+        migrated[oldKey] = null;
+        hasChanges = true;
+      }
+    }
+
+    if (!hasChanges) {
+      localStorage.setItem('tt_utc_migrated_v3_' + username, '1');
+      return;
+    }
+
+    showLoading(true);
+
+    // 写入新的 key
+    for (const [key, data] of Object.entries(migrated)) {
+      if (data !== null) {
+        await client.from('time_data').upsert(
+          { username: username, date: key, data: data },
+          { onConflict: 'username,date' }
+        );
+      }
+    }
+
+    // 删除旧的 key
+    for (const [key, data] of Object.entries(migrated)) {
+      if (data === null) {
+        await client.from('time_data').delete().eq('username', username).eq('date', key);
+      }
+    }
+
+    localStorage.setItem('tt_utc_migrated_v3_' + username, '1');
+    showLoading(false);
+    showToast('日期格式已更新');
+  }
+
   function fetchData() {
     client
       .from('time_data')
       .select('*')
       .eq('username', username)
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (error) {
           console.error('Supabase error:', error);
           setSyncStatus('error', '同步失败');
@@ -570,6 +640,20 @@ function connectToSupabase(username) {
         if (data && data.length > 0) {
           data.forEach(row => { allCachedDays[row.date] = row.data; });
         }
+
+        // 首次登录后执行迁移
+        await migrateUtcToLocal();
+
+        // 迁移后重新获取数据
+        const { data: freshData } = await client
+          .from('time_data')
+          .select('*')
+          .eq('username', username);
+        if (freshData) {
+          allCachedDays = {};
+          freshData.forEach(row => { allCachedDays[row.date] = row.data; });
+        }
+
         dayData = allCachedDays[getDateKey(currentDate)] || {};
         setSyncStatus('online', '已同步');
         renderAll();
@@ -694,7 +778,7 @@ async function renderMultiDayChart(container) {
 
   const d = new Date(startDate);
   while (d <= endDate) {
-    const key = d.toISOString().split('T')[0];
+    const key = getDateKey(d);
     if (allCachedDays[key]) {
       allEntries.push(...getEntriesForDateRange(allCachedDays[key]));
     }
