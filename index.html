@@ -503,17 +503,10 @@ let longPressTriggered = false;
 const LONG_PRESS_DELAY = 300;
 
 function getDateKey(date) {
-  // 凌晨 0:00-2:00 属于前一天的记录周期
-  // 例如：5月11日 01:00 → key 为 2025-05-10（因为这是5月10号 02:00 → 5月11号 02:00 的周期）
-  const h = date.getHours();
-  const d = new Date(date);
-  if (h < 2) {
-    d.setDate(d.getDate() - 1);
-  }
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function formatDate(date) {
@@ -1259,12 +1252,7 @@ document.getElementById('nextDay').addEventListener('click', () => {
   switchToDate(d);
 });
 document.getElementById('todayBtn').addEventListener('click', () => {
-  const now = new Date();
-  const today = new Date(now);
-  if (now.getHours() < 2) {
-    today.setDate(today.getDate() - 1);
-  }
-  switchToDate(today);
+  switchToDate(new Date());
 });
 
 // Modal buttons
@@ -1315,11 +1303,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Init
-const initDate = new Date();
-if (initDate.getHours() < 2) {
-  initDate.setDate(initDate.getDate() - 1);
-}
-currentDate = initDate;
+currentDate = new Date();
 document.getElementById('currentDate').textContent = formatDate(currentDate);
 renderColorLegend();
 const saved = localStorage.getItem('tt_username');
