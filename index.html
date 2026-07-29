@@ -653,6 +653,13 @@ let longPressTimer = null;
 let longPressTriggered = false;
 const LONG_PRESS_DELAY = 300;
 
+// 凌晨 00:00–02:00 视为前一天（深夜补记仍归属刚过去的那一天）
+function effectiveDay(base) {
+  const d = new Date(base || Date.now());
+  if (d.getHours() < 2) d.setDate(d.getDate() - 1);
+  return d;
+}
+
 function getDateKey(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -707,51 +714,76 @@ function switchUser() {
   showLoginModal();
 }
 
+// ===== 全局辅助函数（供 fetchData 和 saveToFirebase 共用）=====
+
+// 计算一天数据中有多少个有效时间块
+function countBlocks(d) {
+  if (!d) return 0;
+  let n = 0;
+  for (const k of Object.keys(d)) {
+    if (!k.startsWith('_') && d[k] && d[k].text) n++;
+  }
+  return n;
+}
+
+// 云端 data 字段可能是对象，也可能是 JSON 字符串（取决于列类型/客户端），统一安全解析
+function normalizeCloudData(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw;
+  if (typeof raw === 'string') {
+    try {
+      const p = JSON.parse(raw);
+      return (p && typeof p === 'object') ? p : null;
+    } catch (e) { return null; }
+  }
+  return null;
+}
+
+// 合并两天的数据，取并集，绝不丢数据；支持删除标记，时间戳相同时本地优先
+function mergeDayData(local, cloud) {
+  if (!cloud || typeof cloud !== 'object' || Object.keys(cloud).length === 0) return local || {};
+  if (!local || typeof local !== 'object' || Object.keys(local).length === 0) return cloud;
+  const merged = {};
+  const allKeys = new Set([...Object.keys(local), ...Object.keys(cloud)]);
+  allKeys.forEach(k => {
+    if (k === '_water') {
+      const l = local._water || [];
+      const c = cloud._water || [];
+      merged._water = l.length >= c.length ? l : c;
+    } else if (k === '_notes') {
+      const l = local._notes || [];
+      const c = cloud._notes || [];
+      merged._notes = l.length >= c.length ? l : c;
+    } else {
+      const lv = local[k];
+      const cv = cloud[k];
+      const lt = (lv && lv._ts) || 0;
+      const ct = (cv && cv._ts) || 0;
+      const lHas = lv && lv.text;
+      const cHas = cv && cv.text;
+      const lDel = lv && lv._deleted;
+      const cDel = cv && cv._deleted;
+      if (lHas && cHas) {
+        merged[k] = lt >= ct ? lv : cv;
+      } else if (lDel || cDel) {
+        merged[k] = lt >= ct ? lv : cv;
+      } else if (lHas) {
+        merged[k] = lv;
+      } else if (cHas) {
+        merged[k] = cv;
+      } else if (lv !== undefined) {
+        merged[k] = lv;
+      } else {
+        merged[k] = cv;
+      }
+    }
+  });
+  return merged;
+}
+
 function connectToSupabase(username) {
   if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
   setSyncStatus('online', '连接中...');
-
-  // 计算一天数据中有多少个有效时间块
-  function countBlocks(d) {
-    if (!d) return 0;
-    let n = 0;
-    for (const k of Object.keys(d)) {
-      if (!k.startsWith('_') && d[k] && d[k].text) n++;
-    }
-    return n;
-  }
-
-  // 合并两天的数据，取并集，绝不丢数据
-  function mergeDayData(local, cloud) {
-    if (!cloud || typeof cloud !== 'object' || Object.keys(cloud).length === 0) return local || {};
-    if (!local || typeof local !== 'object' || Object.keys(local).length === 0) return cloud;
-    const merged = {};
-    const allKeys = new Set([...Object.keys(local), ...Object.keys(cloud)]);
-    allKeys.forEach(k => {
-      if (k === '_water') {
-        const l = local._water || [];
-        const c = cloud._water || [];
-        merged._water = l.length >= c.length ? l : c;
-      } else if (k === '_notes') {
-        const l = local._notes || [];
-        const c = cloud._notes || [];
-        merged._notes = l.length >= c.length ? l : c;
-      } else if (local[k] && local[k].text && cloud[k] && cloud[k].text) {
-        const lt = local[k]._ts || 0;
-        const ct = cloud[k]._ts || 0;
-        merged[k] = lt > ct ? local[k] : cloud[k];
-      } else if (local[k] && local[k].text) {
-        merged[k] = local[k];
-      } else if (cloud[k] && cloud[k].text) {
-        merged[k] = cloud[k];
-      } else if (local[k] !== undefined) {
-        merged[k] = local[k];
-      } else {
-        merged[k] = cloud[k];
-      }
-    });
-    return merged;
-  }
 
   function fetchData() {
     if (isSaving) return;
@@ -772,8 +804,9 @@ function connectToSupabase(username) {
         const cloudCache = {};
         if (data && data.length > 0) {
           data.forEach(row => {
-            if (row.data && typeof row.data === 'object') {
-              cloudCache[row.date] = row.data;
+            const parsed = normalizeCloudData(row.data);
+            if (parsed && Object.keys(parsed).length > 0) {
+              cloudCache[row.date] = parsed;
             }
           });
         }
@@ -785,10 +818,12 @@ function connectToSupabase(username) {
         // 合并当天数据
         const mergedToday = mergeDayData(localToday, cloudToday);
 
-        // 安全检查：合并后的时间块不能比本地少
+        // 安全检查：合并结果的块数不应少于本地与云端的交集（较小值），
+        // 既能容忍正常删除，又能在云端返回残缺快照试图清空本地时兜底
         const localBlocks = countBlocks(localToday);
+        const cloudBlocks = countBlocks(cloudToday);
         const mergedBlocks = countBlocks(mergedToday);
-        const finalToday = mergedBlocks >= localBlocks ? mergedToday : localToday;
+        const finalToday = mergedBlocks >= Math.min(localBlocks, cloudBlocks) ? mergedToday : localToday;
 
         // 合并所有日期缓存
         const allDates = new Set([...Object.keys(allCachedDays), ...Object.keys(cloudCache)]);
@@ -798,8 +833,10 @@ function connectToSupabase(username) {
           } else {
             const localD = allCachedDays[d];
             const mergedD = mergeDayData(localD, cloudCache[d]);
-            // 安全检查
-            allCachedDays[d] = countBlocks(mergedD) >= countBlocks(localD) ? mergedD : (localD || mergedD);
+            // 安全检查：不少于本地与云端的交集（较小值）
+            const lb = countBlocks(localD);
+            const cb = countBlocks(cloudCache[d]);
+            allCachedDays[d] = countBlocks(mergedD) >= Math.min(lb, cb) ? mergedD : (localD || mergedD);
           }
         });
 
@@ -812,11 +849,25 @@ function connectToSupabase(username) {
             .catch(e => console.error('补传失败:', e));
         }
 
+        // 若上次保存失败，轮询时自动重传待同步的数据
+        if (syncDirty && pendingRetry && !isSaving) {
+          client.from('time_data')
+            .upsert(pendingRetry, { onConflict: 'username,date' })
+            .then(({ error }) => {
+              if (!error) {
+                syncDirty = false;
+                pendingRetry = null;
+                setSyncStatus('online', '已同步');
+              }
+            })
+            .catch(() => { /* 保留标志，等待下次重试 */ });
+        }
+
         // 保存到 localStorage
         localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
 
         if (!cloudLoaded) cloudLoaded = true;
-        setSyncStatus('online', '已同步');
+        if (!syncDirty) setSyncStatus('online', '已同步');
         renderAll();
         fetchTodos();
       });
@@ -847,20 +898,67 @@ async function fetchDaysForChart() {
 
 let isSaving = false;
 let lastSaveTime = 0;
+let syncDirty = false;        // 有数据尚未成功同步到云端
+let pendingRetry = null;      // 上次保存失败、等待重传的数据 { username, date, data }
 
 async function saveToFirebase() {
   isSaving = true;
   lastSaveTime = Date.now();
-  try {
-    allCachedDays[getDateKey(currentDate)] = dayData;
-    localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
+  const todayKey = getDateKey(currentDate);
 
-    await client
+  // 先从云端拉取该日期的最新数据，合并后再写，防止多标签页互相覆盖
+  let dataToSave = dayData;
+  try {
+    const { data: cloudRows, error: readErr } = await client
       .from('time_data')
-      .upsert({ username: currentUser, date: getDateKey(currentDate), data: dayData }, { onConflict: 'username,date' });
+      .select('data')
+      .eq('username', currentUser)
+      .eq('date', todayKey)
+      .maybeSingle();
+    if (!readErr && cloudRows && cloudRows.data) {
+      const cloudDay = normalizeCloudData(cloudRows.data);
+      if (cloudDay && Object.keys(cloudDay).length > 0) {
+        dataToSave = mergeDayData(dayData, cloudDay);
+      }
+    }
   } catch (e) {
-    console.error(e);
-    showToast('云端保存失败');
+    console.warn('保存前读取云端失败，使用本地数据:', e);
+  }
+
+  // 确保 dayData 和 allCachedDays 指向同一个对象
+  dayData = dataToSave;
+  allCachedDays[todayKey] = dataToSave;
+  try {
+    localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
+  } catch (e) { console.error('localStorage 写入失败:', e); }
+
+  const payload = { username: currentUser, date: todayKey, data: dataToSave };
+
+  // upsert 带一次自动重试
+  const doUpsert = async () => {
+    const { error } = await client
+      .from('time_data')
+      .upsert(payload, { onConflict: 'username,date' });
+    if (error) throw error;
+  };
+
+  try {
+    try {
+      await doUpsert();
+    } catch (firstErr) {
+      console.error('首次保存失败，重试中:', firstErr);
+      await new Promise(r => setTimeout(r, 800));
+      await doUpsert();
+    }
+    syncDirty = false;
+    pendingRetry = null;
+    setSyncStatus('online', '已同步');
+  } catch (e) {
+    console.error('云端保存失败:', e);
+    syncDirty = true;
+    pendingRetry = payload;
+    setSyncStatus('error', '未同步到云端');
+    showToast('云端保存失败，数据仅存本地，将自动重试');
   } finally {
     // 保存后 5 秒内不允许 fetchData 覆盖本地数据
     setTimeout(() => { isSaving = false; }, 5000);
@@ -1760,7 +1858,8 @@ function saveActivity() {
 
 function deleteActivity() {
   if (editingSlots.length !== 1) return;
-  delete dayData[editingSlots[0]];
+  // 写入删除标记而非直接 delete，避免云端旧数据在合并时把已删除的块复活
+  dayData[editingSlots[0]] = { _deleted: true, _ts: Date.now() };
   showLoading(true);
   saveToFirebase().then(() => {
     showLoading(false);
@@ -1800,7 +1899,7 @@ document.getElementById('nextDay').addEventListener('click', () => {
   switchToDate(d);
 });
 document.getElementById('todayBtn').addEventListener('click', () => {
-  switchToDate(new Date());
+  switchToDate(effectiveDay());
 });
 
 // Modal buttons
@@ -2016,8 +2115,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Init
-currentDate = new Date();
-noteLogDate = new Date();
+currentDate = effectiveDay();
+noteLogDate = effectiveDay();
 loadLocalData();
 document.getElementById('currentDate').textContent = formatDate(currentDate);
 renderColorLegend();
