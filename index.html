@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f0f2f5">
 <title>时间块记录</title>
 <style>
   :root {
@@ -30,6 +31,23 @@
     color: var(--text);
     line-height: 1.5;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* 防止移动端点击出现蓝色高亮 */
+  a, button, input, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* 触摸反馈 */
+  @media (hover: none) {
+    .time-block:active { background: var(--hover); }
+    .actions button:active { opacity: 0.85; transform: scale(0.98); }
+    .chart-tab:active { transform: scale(0.97); }
+    .mode-btn:active { transform: scale(0.98); }
   }
 
   .container { max-width: 680px; margin: 0 auto; padding: 16px; }
@@ -52,6 +70,78 @@
   .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); text-align: center; }
   .stat-card .label { font-size: 0.7rem; color: var(--text-light); }
   .stat-card .value { font-size: 1.3rem; font-weight: 700; margin-top: 2px; color: var(--primary); }
+
+  /* 喝水记录 */
+  .water-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .water-icon { width: 48px; height: 48px; background: rgba(59,201,219,0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+  .water-info { flex: 1; min-width: 100px; }
+  .water-info .water-label { font-size: 0.8rem; color: var(--text-light); }
+  .water-info .water-total { font-size: 1.4rem; font-weight: 700; color: #3bc9db; }
+  .water-info .water-total .unit { font-size: 0.8rem; font-weight: 500; color: var(--text-light); margin-left: 2px; }
+  .water-add-row { display: flex; gap: 8px; align-items: center; }
+  .water-quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .water-quick-btns button { padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 20px; background: var(--card-bg); cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--text); transition: all 0.15s; }
+  .water-quick-btns button:hover { border-color: #3bc9db; color: #3bc9db; background: rgba(59,201,219,0.06); }
+  .water-undo-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; }
+  .water-undo-btn:hover { color: var(--primary); }
+
+  /* 备注日志 */
+  .note-log-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; }
+  .note-log-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+  .note-log-header h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+  .note-log-toggle { font-size: 0.75rem; color: var(--text-light); transition: transform 0.2s; }
+  .note-log-card.collapsed .note-log-toggle { transform: rotate(-90deg); }
+  .note-log-card.collapsed .note-log-body { display: none; }
+  .note-log-body { margin-top: 12px; }
+  .note-log-search-row { margin-bottom: 10px; }
+  .note-log-search-row input { width: 100%; padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 0.88rem; font-family: inherit; background: var(--bg); transition: border-color 0.15s; }
+  .note-log-search-row input:focus { outline: none; border-color: var(--primary); background: var(--card-bg); }
+  .note-log-search-row input::placeholder { color: #bbb; }
+  .note-log-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; }
+  .note-log-arrow { background: none; border: 1.5px solid var(--border); color: var(--text-light); cursor: pointer; width: 32px; height: 32px; border-radius: 50%; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .note-log-arrow:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: rgba(74,108,247,0.06); }
+  .note-log-arrow:disabled { opacity: 0.3; cursor: default; }
+  .note-log-date-display { font-size: 0.88rem; font-weight: 600; color: var(--text); min-width: 140px; text-align: center; }
+  .note-log-date-display .today-tag { display: inline-block; font-size: 0.68rem; background: var(--primary); color: white; padding: 1px 6px; border-radius: 8px; margin-left: 4px; font-weight: 500; vertical-align: middle; }
+  .note-log-list { display: flex; flex-direction: column; gap: 8px; }
+  .note-log-item { padding: 10px 12px; border-radius: 10px; background: var(--bg); border-left: 3px solid var(--primary); cursor: pointer; transition: background 0.15s; }
+  .note-log-item:hover { background: var(--hover); }
+  .note-log-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .note-log-time { font-size: 0.75rem; color: var(--primary); font-weight: 600; }
+  .note-log-activity { font-size: 0.8rem; font-weight: 500; color: var(--text); }
+  .note-log-note { font-size: 0.85rem; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .note-log-note mark { background: rgba(74,108,247,0.18); color: var(--primary); border-radius: 2px; padding: 0 2px; }
+  .note-log-empty { text-align: center; padding: 16px; color: var(--text-light); font-size: 0.8rem; }
+  .note-log-count { font-size: 0.72rem; color: var(--text-light); font-weight: 400; margin-left: 6px; }
+
+  /* 周待办 */
+  .todo-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; }
+  .todo-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .todo-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .todo-add-row input { flex: 1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: inherit; }
+  .todo-add-row input:focus { outline: none; border-color: var(--primary); }
+  .todo-add-row button { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+  .todo-list { display: flex; flex-direction: column; gap: 6px; }
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--bg); transition: all 0.15s; }
+  .todo-item:hover { background: var(--hover); }
+  .todo-item.done { opacity: 0.5; }
+  .todo-item.done .todo-text { text-decoration: line-through; color: var(--text-light); }
+  .todo-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; background: var(--card-bg); }
+  .todo-check:hover { border-color: var(--primary); }
+  .todo-check.checked { background: var(--primary); border-color: var(--primary); }
+  .todo-check.checked::after { content: '✓'; color: white; font-size: 12px; font-weight: 700; }
+  .todo-text { flex: 1; font-size: 0.9rem; cursor: text; padding: 2px 4px; border-radius: 4px; }
+  .todo-text:hover { background: rgba(0,0,0,0.03); }
+  .todo-edit-input { flex: 1; font-size: 0.9rem; padding: 4px 8px; border: 1.5px solid var(--primary); border-radius: 6px; background: var(--card-bg); font-family: inherit; outline: none; }
+  .todo-delete { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; opacity: 0; transition: opacity 0.15s; }
+  .todo-edit-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 0.75rem; padding: 4px 6px; border-radius: 4px; opacity: 0; transition: opacity 0.15s; }
+  .todo-item:hover .todo-delete, .todo-item:hover .todo-edit-btn { opacity: 1; }
+  .todo-delete:hover { color: #ff4d4f; background: rgba(255,77,79,0.08); }
+  .todo-edit-btn:hover { color: var(--primary); background: rgba(74,108,247,0.08); }
+  .todo-empty { text-align: center; padding: 16px; color: var(--text-light); font-size: 0.85rem; }
+  .todo-progress { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-light); }
+  .todo-progress-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .todo-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s; }
 
   .chart-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; }
   .chart-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -203,7 +293,13 @@
 
   .time-content .activity { display: flex; align-items: center; gap: 8px; width: 100%; overflow: hidden; }
   .time-content .activity-text { flex: 1; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .time-content .activity-note { font-size: 0.7rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+  .time-content .activity-note-icon { cursor: pointer; font-size: 0.75rem; flex-shrink: 0; padding: 2px 4px; border-radius: 4px; opacity: 0.7; transition: opacity 0.15s, background 0.15s; }
+  .time-content .activity-note-icon:hover { opacity: 1; background: rgba(0,0,0,0.05); }
+  .note-popover { display: none; position: fixed; z-index: 200; background: var(--card-bg); border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18); padding: 14px 16px; max-width: 300px; min-width: 140px; font-size: 0.88rem; line-height: 1.6; word-break: break-word; }
+  .note-popover.active { display: block; }
+  .note-popover::before { content: ''; position: absolute; top: -6px; left: 24px; width: 12px; height: 12px; background: var(--card-bg); transform: rotate(45deg); box-shadow: -2px -2px 4px rgba(0,0,0,0.05); }
+  .note-popover .note-popover-time { font-size: 0.75rem; color: var(--primary); font-weight: 600; margin-bottom: 4px; }
+  .note-popover .note-popover-text { color: var(--text); }
   .time-content .edit-btn { background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 0.75rem; padding: 4px 6px; border-radius: 4px; flex-shrink: 0; }
   .time-content .edit-btn:hover { background: rgba(0,0,0,0.05); color: var(--text); }
   .time-content .check-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.85rem; padding: 2px 4px; flex-shrink: 0; }
@@ -219,7 +315,8 @@
   .modal input:focus, .modal textarea:focus { outline: none; border-color: var(--primary); }
   .modal input::placeholder { color: #bbb; }
   .modal .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-  .modal .color-option { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; }
+  .modal .color-option { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; position: relative; }
+  .modal .color-option::after { content: ''; position: absolute; inset: -8px; } /* 增大触摸区域 */
   .modal .color-option:hover { transform: scale(1.15); }
   .modal .color-option.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--card-bg); }
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
@@ -243,23 +340,108 @@
   .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  @media (max-width: 500px) {
+  @media (max-width: 600px) {
+    /* 整体布局 */
     .container { padding: 12px; }
+    h1 { font-size: 1.25rem; }
+    header { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+    .user-bar { font-size: 0.85rem; }
+    .user-name { font-size: 0.85rem; padding: 4px 8px; }
+
+    /* 日期导航 */
+    .date-nav { width: 100%; justify-content: center; padding: 6px; }
+    .date-nav button { padding: 8px 14px; font-size: 0.95rem; }
+    .date-nav .current-date { font-size: 0.9rem; min-width: 120px; }
+
+    /* 统计卡片 */
+    .stats { gap: 8px; margin-bottom: 12px; }
+    .stat-card { padding: 14px 10px; }
+    .stat-card .label { font-size: 0.8rem; }
+    .stat-card .value { font-size: 1.4rem; }
+
+    /* 图表区域 */
+    .chart-card { padding: 14px 12px; margin-bottom: 12px; }
+    .chart-card h3 { font-size: 0.8rem; }
+    .chart-tabs { gap: 8px; }
+    .chart-tab { padding: 8px; font-size: 0.85rem; }
+    .chart-hint { font-size: 0.8rem; }
+    .chart-container { flex-direction: column; gap: 12px; }
+    .chart-canvas-wrap { width: 160px; height: 160px; }
+    .chart-center-text .hours { font-size: 1.2rem; }
+    .chart-center-text .label { font-size: 0.75rem; }
+    .chart-legend { min-width: 100%; }
+    .legend-item { font-size: 0.9rem; padding: 4px 0; }
+    .legend-dot { width: 12px; height: 12px; }
+    .legend-value { font-size: 0.85rem; }
+
+    /* 操作按钮 */
+    .actions { gap: 10px; margin-bottom: 12px; }
+    .actions button { padding: 12px 10px; font-size: 0.9rem; min-height: 44px; }
+
+    /* 选择信息栏 */
+    .selection-info { padding: 12px 14px; font-size: 0.9rem; margin-bottom: 10px; }
+    .selection-info button { padding: 6px 14px; font-size: 0.85rem; min-height: 36px; }
+
+    /* 颜色图例 */
+    .color-legend { padding: 12px 14px; margin-bottom: 12px; }
+    .color-legend h3 { font-size: 0.8rem; margin-bottom: 8px; }
+    .color-legend-grid { gap: 12px; }
+    .color-legend-item { font-size: 0.9rem; gap: 8px; }
+    .color-legend-dot { width: 14px; height: 14px; }
+
+    /* 睡眠区块 */
+    .sleep-block { margin-bottom: 12px; }
+    .sleep-header { padding: 14px; gap: 10px; }
+    .sleep-icon { width: 44px; height: 44px; font-size: 1.5rem; }
+    .sleep-info .time-range { font-size: 0.95rem; }
+    .sleep-info .sleep-label { font-size: 0.85rem; }
+    .sleep-toggle { padding: 6px 12px; font-size: 0.85rem; }
+
+    /* 时间块 - 关键触摸区域优化 */
+    .period-label { padding: 12px 14px; font-size: 0.85rem; }
+    .time-block { min-height: 50px; }
+    .time-label {
+      width: 76px;
+      padding: 12px 8px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .time-content {
+      padding: 12px 14px;
+      min-height: 50px;
+    }
+    .time-content .activity-text { font-size: 0.9rem; }
+    .time-content .activity-note-icon { font-size: 0.85rem; }
+    .time-content .edit-btn { padding: 6px 8px; font-size: 0.85rem; }
+    .time-content.empty::after { font-size: 1.3rem; }
+
+    /* 弹窗 */
+    .modal { padding: 20px; max-width: 90%; }
+    .modal h2 { font-size: 1.1rem; }
+    .modal .time-hint { font-size: 0.85rem; }
+    .modal input, .modal textarea { padding: 12px 14px; font-size: 1rem; }
+    .modal-actions button { padding: 10px 18px; font-size: 0.9rem; min-height: 44px; }
+    .modal .color-picker { gap: 12px; }
+    .modal .color-option { width: 40px; height: 40px; border-width: 3px; }
+
+    /* 登录弹窗 */
+    .login-modal .modal { max-width: 90%; }
+    .login-modal .login-icon { font-size: 2.8rem; }
+    .login-modal .login-desc { font-size: 0.9rem; }
+    .login-modal input { font-size: 1.1rem; padding: 12px; }
+    .login-modal .login-hint { font-size: 0.85rem; }
+    .login-modal .login-btn { padding: 14px; font-size: 1.05rem; min-height: 48px; }
+  }
+
+  /* 超小屏幕进一步优化 */
+  @media (max-width: 380px) {
+    .container { padding: 10px; }
     h1 { font-size: 1.15rem; }
-    header { flex-direction: column; align-items: flex-start; gap: 8px; }
-    .date-nav { width: 100%; justify-content: center; }
-    .stats { gap: 8px; }
-    .stat-card { padding: 10px 8px; }
-    .stat-card .value { font-size: 1.1rem; }
-    .actions button { padding: 9px 8px; font-size: 0.75rem; }
-    .time-label { width: 72px; font-size: 0.7rem; padding: 8px 6px; white-space: nowrap; }
-    .time-content { padding: 8px 10px; min-height: 40px; }
-    .time-content .activity-text { font-size: 0.8rem; }
-    .sleep-header { padding: 12px 14px; }
-    .chart-container { flex-direction: column; }
-    .chart-canvas-wrap { width: 120px; height: 120px; }
-    .color-legend-grid { gap: 8px; }
-    .color-legend-item { font-size: 0.75rem; }
+    .time-label { width: 68px; font-size: 0.8rem; padding: 10px 6px; }
+    .time-content { padding: 10px 12px; min-height: 48px; }
+    .time-content .activity-text { font-size: 0.85rem; }
+    .stat-card .value { font-size: 1.2rem; }
+    .chart-canvas-wrap { width: 140px; height: 140px; }
   }
 </style>
 </head>
@@ -288,6 +470,55 @@
     <div class="stat-card"><div class="label">已记录</div><div class="value" id="statRecorded">0h</div></div>
     <div class="stat-card"><div class="label">空闲</div><div class="value" id="statEmpty">24h</div></div>
     <div class="stat-card"><div class="label">活动数</div><div class="value" id="statActivities">0</div></div>
+  </div>
+
+  <div class="water-card" id="waterCard">
+    <div class="water-icon">💧</div>
+    <div class="water-info">
+      <div class="water-label">今日喝水</div>
+      <div class="water-total"><span id="waterTotal">0</span><span class="unit">ml</span></div>
+    </div>
+    <div class="water-quick-btns">
+      <button class="water-quick" data-ml="200">+200ml</button>
+      <button class="water-quick" data-ml="300">+300ml</button>
+      <button class="water-quick" data-ml="500">+500ml</button>
+      <input type="number" id="waterCustomInput" placeholder="自定义" min="1" max="9999" style="width:80px; padding:6px 10px; border:1.5px solid var(--border); border-radius:20px; font-size:0.85rem; text-align:center; font-family:inherit;">
+      <button class="water-quick" id="waterCustomBtn">添加</button>
+    </div>
+    <button class="water-undo-btn" id="waterUndoBtn" title="撤销上一次">撤销</button>
+  </div>
+
+  <div class="note-log-card" id="noteLogCard">
+    <div class="note-log-header">
+      <h3>📝 备注日志</h3>
+      <span class="note-log-toggle">▼</span>
+    </div>
+    <div class="note-log-body">
+      <div class="note-log-search-row">
+        <input type="text" id="noteLogSearch" placeholder="搜索备注关键词..." autocomplete="off">
+      </div>
+      <div class="note-log-nav">
+        <button class="note-log-arrow" id="noteLogPrev">◀</button>
+        <span class="note-log-date-display" id="noteLogDateDisplay">今天</span>
+        <button class="note-log-arrow" id="noteLogNext">▶</button>
+      </div>
+      <div class="note-log-list" id="noteLogList">
+        <div class="note-log-empty">暂无备注</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="todo-card" id="todoCard">
+    <h3>周待办</h3>
+    <div class="todo-add-row">
+      <input type="text" id="todoInput" placeholder="添加新任务..." maxlength="100" autocomplete="off">
+      <button id="todoAddBtn">添加</button>
+    </div>
+    <div class="todo-list" id="todoList"><div class="todo-empty">暂无待办任务</div></div>
+    <div class="todo-progress" id="todoProgress" style="display:none;">
+      <span id="todoProgressText">0/0</span>
+      <div class="todo-progress-bar"><div class="todo-progress-fill" id="todoProgressFill" style="width:0%"></div></div>
+    </div>
   </div>
 
   <div class="chart-card" id="chartCard">
@@ -335,6 +566,12 @@
 
 <div id="selectionBox"></div>
 
+<!-- Note Popover -->
+<div class="note-popover" id="notePopover">
+  <div class="note-popover-time" id="notePopoverTime"></div>
+  <div class="note-popover-text" id="notePopoverText"></div>
+</div>
+
 <!-- Activity Modal -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
@@ -370,21 +607,11 @@
 </div>
 <input type="file" id="importInput" accept=".json">
 
-<script src="https://unpkg.com/firebase@10.12.2/firebase-app-compat.js"></script>
-<script src="https://unpkg.com/firebase@10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBds0R-1ks9VZnO6iEUM-el94E77dzHEWU",
-  authDomain: "time-tracker-a9acb.firebaseapp.com",
-  projectId: "time-tracker-a9acb",
-  storageBucket: "time-tracker-a9acb.firebasestorage.app",
-  messagingSenderId: "843669525828",
-  appId: "1:843669525828:web:ff62cd807fbad05000b311",
-  measurementId: "G-F531WV6NL4"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const SUPABASE_URL = 'https://jsreyokzmlpwsmlffiqq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_8V8gFZ-RM61be5mVVuE_8g_SfjnRPZO';
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const COLORS = ['#50c878', '#4a6cf7', '#ff6b6b', '#9775fa', '#ffd43b', '#ffa94d', '#3bc9db'];
 const COLOR_LABELS = { '#50c878': '工作', '#4a6cf7': '交通', '#ff6b6b': '学习', '#9775fa': '娱乐', '#ffd43b': '输出', '#ffa94d': '生活', '#3bc9db': '休息' };
@@ -397,8 +624,26 @@ let allCachedDays = {};
 let editingSlots = [];
 let isSleepExpanded = false;
 let currentUser = '';
-let unsubscribe = null;
+let syncInterval = null;
 let chartPeriod = 'day'; // 'day', 'week', 'month'
+
+// 周待办数据
+let weekTodos = []; // [{ id, text, done }]
+let currentWeekKey = '';
+
+// 喝水记录数据
+let waterRecords = []; // [{ ml, time }] 当天的喝水记录
+let noteLogDate = new Date();
+let cloudLoaded = false; // 云端数据是否已加载完成
+
+function getWeekKey(date) {
+  // 用本周周一的日期作为周 key
+  const d = new Date(date);
+  const dayOfWeek = d.getDay();
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - daysSinceMonday);
+  return getDateKey(monday);
+}
 
 // Long-press to box-select state
 let selectedSlots = new Set();
@@ -408,7 +653,12 @@ let longPressTimer = null;
 let longPressTriggered = false;
 const LONG_PRESS_DELAY = 300;
 
-function getDateKey(date) { return date.toISOString().split('T')[0]; }
+function getDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 function formatDate(date) {
   const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
@@ -444,12 +694,12 @@ function doLogin(username) {
   localStorage.setItem('tt_username', username);
   document.getElementById('userName').textContent = username;
   hideLoginModal();
-  connectToFirebase(username);
+  connectToSupabase(username);
 }
 
 function switchUser() {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  dayData = {}; currentUser = '';
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
+  dayData = {}; currentUser = ''; cloudLoaded = false; todosLoaded = false;
   localStorage.removeItem('tt_username');
   document.getElementById('userName').textContent = '未登录';
   setSyncStatus('offline', '未连接');
@@ -457,47 +707,132 @@ function switchUser() {
   showLoginModal();
 }
 
-function connectToFirebase(username) {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  const ref = db.collection('timeData').doc(username);
+function connectToSupabase(username) {
+  if (syncInterval) { clearInterval(syncInterval); syncInterval = null; }
   setSyncStatus('online', '连接中...');
-  unsubscribe = ref.onSnapshot((snap) => {
-    if (snap.exists) {
-      const rawData = snap.data();
-      // Detect data format: new format has date keys like "2026-05-09", old format has numeric keys like "0", "0.5"
-      const hasDateKeys = Object.keys(rawData).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
-      if (hasDateKeys) {
-        allCachedDays = rawData;
-      } else {
-        // Old format: migrate to new format
-        allCachedDays = { [getDateKey(currentDate)]: rawData };
-        // Save migrated data back to Firebase
-        db.collection('timeData').doc(username).set(allCachedDays).catch(() => {});
-      }
-      dayData = allCachedDays[getDateKey(currentDate)] || {};
-    } else {
-      allCachedDays = {};
-      dayData = {};
+
+  // 计算一天数据中有多少个有效时间块
+  function countBlocks(d) {
+    if (!d) return 0;
+    let n = 0;
+    for (const k of Object.keys(d)) {
+      if (!k.startsWith('_') && d[k] && d[k].text) n++;
     }
-    setSyncStatus('online', '已同步');
-    renderAll();
-  }, (err) => {
-    console.error('Firebase error:', err);
-    setSyncStatus('error', '同步失败');
-    loadLocalData();
-    renderAll();
-  });
+    return n;
+  }
+
+  // 合并两天的数据，取并集，绝不丢数据
+  function mergeDayData(local, cloud) {
+    if (!cloud || typeof cloud !== 'object' || Object.keys(cloud).length === 0) return local || {};
+    if (!local || typeof local !== 'object' || Object.keys(local).length === 0) return cloud;
+    const merged = {};
+    const allKeys = new Set([...Object.keys(local), ...Object.keys(cloud)]);
+    allKeys.forEach(k => {
+      if (k === '_water') {
+        const l = local._water || [];
+        const c = cloud._water || [];
+        merged._water = l.length >= c.length ? l : c;
+      } else if (k === '_notes') {
+        const l = local._notes || [];
+        const c = cloud._notes || [];
+        merged._notes = l.length >= c.length ? l : c;
+      } else if (local[k] && local[k].text && cloud[k] && cloud[k].text) {
+        const lt = local[k]._ts || 0;
+        const ct = cloud[k]._ts || 0;
+        merged[k] = lt > ct ? local[k] : cloud[k];
+      } else if (local[k] && local[k].text) {
+        merged[k] = local[k];
+      } else if (cloud[k] && cloud[k].text) {
+        merged[k] = cloud[k];
+      } else if (local[k] !== undefined) {
+        merged[k] = local[k];
+      } else {
+        merged[k] = cloud[k];
+      }
+    });
+    return merged;
+  }
+
+  function fetchData() {
+    if (isSaving) return;
+
+    client
+      .from('time_data')
+      .select('*')
+      .eq('username', username)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Supabase error:', error);
+          setSyncStatus('error', '同步失败');
+          return;
+        }
+        if (isSaving) return;
+
+        // 构建云端缓存
+        const cloudCache = {};
+        if (data && data.length > 0) {
+          data.forEach(row => {
+            if (row.data && typeof row.data === 'object') {
+              cloudCache[row.date] = row.data;
+            }
+          });
+        }
+
+        const todayKey = getDateKey(currentDate);
+        const cloudToday = cloudCache[todayKey];
+        const localToday = dayData;
+
+        // 合并当天数据
+        const mergedToday = mergeDayData(localToday, cloudToday);
+
+        // 安全检查：合并后的时间块不能比本地少
+        const localBlocks = countBlocks(localToday);
+        const mergedBlocks = countBlocks(mergedToday);
+        const finalToday = mergedBlocks >= localBlocks ? mergedToday : localToday;
+
+        // 合并所有日期缓存
+        const allDates = new Set([...Object.keys(allCachedDays), ...Object.keys(cloudCache)]);
+        allDates.forEach(d => {
+          if (d === todayKey) {
+            allCachedDays[d] = finalToday;
+          } else {
+            const localD = allCachedDays[d];
+            const mergedD = mergeDayData(localD, cloudCache[d]);
+            // 安全检查
+            allCachedDays[d] = countBlocks(mergedD) >= countBlocks(localD) ? mergedD : (localD || mergedD);
+          }
+        });
+
+        dayData = finalToday;
+
+        // 如果本地有数据但云端没有，补传
+        if (countBlocks(localToday) > 0 && countBlocks(cloudToday) === 0) {
+          client.from('time_data')
+            .upsert({ username: currentUser, date: todayKey, data: finalToday }, { onConflict: 'username,date' })
+            .catch(e => console.error('补传失败:', e));
+        }
+
+        // 保存到 localStorage
+        localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
+
+        if (!cloudLoaded) cloudLoaded = true;
+        setSyncStatus('online', '已同步');
+        renderAll();
+        fetchTodos();
+      });
+  }
+
+  fetchData();
+  syncInterval = setInterval(fetchData, 15000);
 }
 
 function loadLocalData() {
   try {
     const all = JSON.parse(localStorage.getItem('timeTrackerAllDays') || '{}');
-    // Detect format
     const hasDateKeys = Object.keys(all).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
     if (hasDateKeys) {
       allCachedDays = all;
     } else if (Object.keys(all).length > 0) {
-      // Old format
       allCachedDays = { [getDateKey(currentDate)]: all };
     } else {
       allCachedDays = {};
@@ -507,20 +842,118 @@ function loadLocalData() {
 }
 
 async function fetchDaysForChart() {
-  // Data is already loaded via onSnapshot, just ensure we have it
-  // No additional fetch needed since all days are in the same document
   return Promise.resolve();
 }
 
+let isSaving = false;
+let lastSaveTime = 0;
+
 async function saveToFirebase() {
+  isSaving = true;
+  lastSaveTime = Date.now();
   try {
     allCachedDays[getDateKey(currentDate)] = dayData;
-    await db.collection('timeData').doc(currentUser).set(allCachedDays);
     localStorage.setItem('timeTrackerAllDays', JSON.stringify(allCachedDays));
+
+    await client
+      .from('time_data')
+      .upsert({ username: currentUser, date: getDateKey(currentDate), data: dayData }, { onConflict: 'username,date' });
   } catch (e) {
     console.error(e);
     showToast('云端保存失败');
+  } finally {
+    // 保存后 5 秒内不允许 fetchData 覆盖本地数据
+    setTimeout(() => { isSaving = false; }, 5000);
   }
+}
+
+// ===== 周待办 =====
+let todosLoaded = false;
+
+async function fetchTodos(force) {
+  if (!currentUser) return;
+  // 只在首次加载或切换日期时拉取，避免 syncInterval 覆盖
+  if (!force && todosLoaded) return;
+  const newWeekKey = getWeekKey(currentDate);
+  currentWeekKey = newWeekKey;
+  const { data, error } = await client
+    .from('week_todos')
+    .select('*')
+    .eq('username', currentUser)
+    .eq('week_key', currentWeekKey)
+    .maybeSingle();
+
+  if (data && data.todos && data.todos.length > 0) {
+    weekTodos = data.todos;
+  } else {
+    // 本周没有待办，检查上周是否有未完成的任务
+    const lastWeekDate = new Date(currentDate);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+    const lastWeekKey = getWeekKey(lastWeekDate);
+    const { data: lastData } = await client
+      .from('week_todos')
+      .select('*')
+      .eq('username', currentUser)
+      .eq('week_key', lastWeekKey)
+      .maybeSingle();
+
+    if (lastData && lastData.todos && lastData.todos.length > 0) {
+      // 只保留未完成的任务，延续到本周
+      const unfinished = lastData.todos.filter(t => !t.done);
+      if (unfinished.length > 0) {
+        weekTodos = unfinished.map(t => ({ ...t, id: Date.now() + Math.random() }));
+        saveTodos();
+        showToast(`${unfinished.length} 个未完成任务已延续到本周`);
+      } else {
+        weekTodos = [];
+      }
+    } else {
+      weekTodos = [];
+    }
+  }
+  // 没数据时不覆盖（保留本地已添加的任务）
+  todosLoaded = true;
+  renderTodos();
+}
+
+async function saveTodos() {
+  if (!currentUser) return;
+  currentWeekKey = getWeekKey(currentDate);
+  try {
+    await client
+      .from('week_todos')
+      .upsert({ username: currentUser, week_key: currentWeekKey, todos: weekTodos }, { onConflict: 'username,week_key' });
+  } catch (e) {
+    console.error('saveTodos error:', e);
+  }
+  renderTodos();
+}
+
+function renderTodos() {
+  const list = document.getElementById('todoList');
+  const progress = document.getElementById('todoProgress');
+
+  if (weekTodos.length === 0) {
+    list.innerHTML = '<div class="todo-empty">暂无待办任务</div>';
+    progress.style.display = 'none';
+    return;
+  }
+
+  progress.style.display = 'flex';
+  const doneCount = weekTodos.filter(t => t.done).length;
+  const totalCount = weekTodos.length;
+  const pct = Math.round((doneCount / totalCount) * 100);
+  document.getElementById('todoProgressText').textContent = `${doneCount}/${totalCount}`;
+  document.getElementById('todoProgressFill').style.width = pct + '%';
+
+  list.innerHTML = weekTodos.map((t, i) =>
+    `<div class="todo-item ${t.done ? 'done' : ''}" data-index="${i}">
+      <div class="todo-check ${t.done ? 'checked' : ''}" data-index="${i}"></div>
+      <span class="todo-text">${escapeHtml(t.text)}</span>
+      <button class="todo-edit-btn" data-index="${i}">&#9998;</button>
+      <button class="todo-delete" data-index="${i}">&times;</button>
+    </div>`
+  ).join('');
 }
 
 function renderColorLegend() {
@@ -536,6 +969,208 @@ function renderAll() {
   renderTimeBlocks();
   renderColorLegend();
   updateStats();
+  // 加载喝水数据
+  waterRecords = (dayData._water || []);
+  renderWater();
+  renderNoteLog();
+}
+
+function slotToTime(slot) {
+  const h = Math.floor(parseFloat(slot));
+  const isHalf = slot.toString().includes('.');
+  return `${String(h).padStart(2,'0')}:${isHalf ? '30' : '00'}`;
+}
+
+function getNotesForDate(dateKey) {
+  // Merge allCachedDays and dayData for the current date
+  const cached = allCachedDays[dateKey];
+  const isCurrentDay = dateKey === getDateKey(currentDate);
+  const data = isCurrentDay ? { ...(cached || {}), ...dayData } : (cached || null);
+  if (!data || typeof data !== 'object') return [];
+  const results = [];
+  for (const [slotKey, slot] of Object.entries(data)) {
+    if (slotKey.startsWith('_')) continue;
+    if (slot && slot.text && slot.note) {
+      results.push({ slot: slotKey, time: slotToTime(slotKey), text: slot.text, note: slot.note, color: slot.color });
+    }
+  }
+  return results.sort((a, b) => parseFloat(a.slot) - parseFloat(b.slot));
+}
+
+function getDatesWithNotes() {
+  const dateKeys = new Set();
+  // Scan allCachedDays
+  for (const [dateKey, data] of Object.entries(allCachedDays)) {
+    if (!data || typeof data !== 'object') continue;
+    for (const [slotKey, slot] of Object.entries(data)) {
+      if (slotKey.startsWith('_')) continue;
+      if (slot && slot.text && slot.note) { dateKeys.add(dateKey); break; }
+    }
+  }
+  // Also scan dayData (for current date)
+  if (dayData && typeof dayData === 'object') {
+    const curKey = getDateKey(currentDate);
+    for (const [slotKey, slot] of Object.entries(dayData)) {
+      if (slotKey.startsWith('_')) continue;
+      if (slot && slot.text && slot.note) { dateKeys.add(curKey); break; }
+    }
+  }
+  // Always include current date and noteLogDate so arrows are never both disabled
+  dateKeys.add(getDateKey(currentDate));
+  dateKeys.add(getDateKey(noteLogDate));
+  return [...dateKeys].sort((a, b) => b.localeCompare(a));
+}
+
+function getAllNotes() {
+  const results = [];
+  const curKey = getDateKey(currentDate);
+  // Build merged data for each date
+  const dateMap = {};
+  for (const [dateKey, data] of Object.entries(allCachedDays)) {
+    if (!data || typeof data !== 'object') continue;
+    dateMap[dateKey] = data;
+  }
+  // Merge dayData into current date
+  if (dayData && typeof dayData === 'object') {
+    if (dateMap[curKey]) {
+      dateMap[curKey] = { ...dateMap[curKey], ...dayData };
+    } else {
+      dateMap[curKey] = dayData;
+    }
+  }
+  for (const [dateKey, data] of Object.entries(dateMap)) {
+    for (const [slotKey, slot] of Object.entries(data)) {
+      if (slotKey.startsWith('_')) continue;
+      if (slot && slot.text && slot.note) {
+        results.push({ dateKey, slot: slotKey, time: slotToTime(slotKey), text: slot.text, note: slot.note, color: slot.color });
+      }
+    }
+  }
+  return results;
+}
+
+function formatDateLabel(dateKey) {
+  const todayKey = getDateKey(new Date());
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = getDateKey(yesterday);
+  const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+  const parts = dateKey.split('-');
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  const label = `${parts[0]}-${parts[1]}-${parts[2]} ${weekdays[d.getDay()]}`;
+  if (dateKey === todayKey) return `${label}<span class="today-tag">今天</span>`;
+  if (dateKey === yesterdayKey) return `${label}<span class="today-tag">昨天</span>`;
+  return label;
+}
+
+function highlightText(text, query) {
+  if (!query) return escapeHtml(text);
+  const escaped = escapeHtml(text);
+  const escapedQuery = escapeHtml(query);
+  const regex = new RegExp(`(${escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return escaped.replace(regex, '<mark>$1</mark>');
+}
+
+function renderNoteLog() {
+  const list = document.getElementById('noteLogList');
+  const dateDisplay = document.getElementById('noteLogDateDisplay');
+  const prevBtn = document.getElementById('noteLogPrev');
+  const nextBtn = document.getElementById('noteLogNext');
+  const h3 = document.querySelector('.note-log-header h3');
+  const query = (document.getElementById('noteLogSearch').value || '').trim().toLowerCase();
+
+  if (query) {
+    // 搜索模式：显示所有匹配结果，按日期分组
+    const allNotes = getAllNotes();
+    const filtered = allNotes.filter(n => n.note.toLowerCase().includes(query) || n.text.toLowerCase().includes(query));
+    dateDisplay.textContent = `搜索结果`;
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    h3.innerHTML = `📝 备注日志<span class="note-log-count">${filtered.length} 条</span>`;
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="note-log-empty">没有找到匹配的备注</div>';
+      return;
+    }
+    const grouped = {};
+    filtered.forEach(n => { if (!grouped[n.dateKey]) grouped[n.dateKey] = []; grouped[n.dateKey].push(n); });
+    const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+    list.innerHTML = sortedDates.map(dateKey => {
+      const items = grouped[dateKey].sort((a, b) => parseFloat(a.slot) - parseFloat(b.slot));
+      return `<div class="note-log-date-group">
+        <div class="note-log-date-label">${formatDateLabel(dateKey)}</div>
+        ${items.map(e => `<div class="note-log-item" style="border-left-color:${e.color || 'var(--primary)'}" data-date="${e.dateKey}" data-slot="${e.slot}">
+          <div class="note-log-item-header">
+            <span class="note-log-time">${e.time}</span>
+            <span class="note-log-activity">${escapeHtml(e.text)}</span>
+          </div>
+          <div class="note-log-note">${highlightText(e.note, query)}</div>
+        </div>`).join('')}
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // 单日期模式：显示 noteLogDate 当天的备注
+  const noteLogKey = getDateKey(noteLogDate);
+  const notes = getNotesForDate(noteLogKey);
+  const allDates = getDatesWithNotes();
+
+  // 更新日期显示
+  dateDisplay.innerHTML = formatDateLabel(noteLogKey);
+
+  // 更新箭头状态
+  const currentIdx = allDates.indexOf(noteLogKey);
+  prevBtn.disabled = currentIdx < 0 || currentIdx >= allDates.length - 1;
+  nextBtn.disabled = currentIdx <= 0;
+
+  // 更新标题计数
+  h3.innerHTML = `📝 备注日志<span class="note-log-count">${notes.length} 条</span>`;
+
+  if (notes.length === 0) {
+    list.innerHTML = '<div class="note-log-empty">这天暂无备注</div>';
+    return;
+  }
+  list.innerHTML = notes.map(e =>
+    `<div class="note-log-item" style="border-left-color:${e.color || 'var(--primary)'}" data-date="${noteLogKey}" data-slot="${e.slot}">
+      <div class="note-log-item-header">
+        <span class="note-log-time">${e.time}</span>
+        <span class="note-log-activity">${escapeHtml(e.text)}</span>
+      </div>
+      <div class="note-log-note">${escapeHtml(e.note)}</div>
+    </div>`
+  ).join('');
+}
+
+function renderWater() {
+  const total = waterRecords.reduce((sum, r) => sum + r.ml, 0);
+  document.getElementById('waterTotal').textContent = total;
+}
+
+function addWater(ml) {
+  if (!currentUser) { showToast('请先登录'); return; }
+  if (!cloudLoaded) { showToast('数据加载中，请稍后'); return; }
+  waterRecords.push({ ml, time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) });
+  dayData._water = waterRecords;
+  renderWater();
+  showLoading(true);
+  saveToFirebase().then(() => {
+    showLoading(false);
+    showToast(`+${ml}ml`);
+  });
+}
+
+function undoWater() {
+  if (!currentUser) return;
+  if (!cloudLoaded) { showToast('数据加载中，请稍后'); return; }
+  if (waterRecords.length === 0) return;
+  waterRecords.pop();
+  dayData._water = waterRecords;
+  renderWater();
+  showLoading(true);
+  saveToFirebase().then(() => {
+    showLoading(false);
+    showToast('已撤销');
+  });
 }
 
 // ===== PIE CHART =====
@@ -545,10 +1180,12 @@ function getDateRangeForPeriod() {
   if (chartPeriod === 'day') {
     startDate = endDate = new Date(now);
   } else if (chartPeriod === 'week') {
-    startDate = new Date(now);
-    startDate.setDate(now.getDate() - now.getDay() + 1);
-    endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
+    // 周一到周日：找到本周周一
+    const dayOfWeek = now.getDay(); // 0=周日, 1=周一, ..., 6=周六
+    // 周日(0) 特殊处理：本周周一 = 今天 - 6 天
+    const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
+    endDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + 6);
   } else {
     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -604,7 +1241,7 @@ async function renderMultiDayChart(container) {
 
   const d = new Date(startDate);
   while (d <= endDate) {
-    const key = d.toISOString().split('T')[0];
+    const key = getDateKey(d);
     if (allCachedDays[key]) {
       allEntries.push(...getEntriesForDateRange(allCachedDays[key]));
     }
@@ -667,6 +1304,11 @@ function drawPieChart() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 280, 280);
+  // 重置所有绘制状态，防止叠加
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
   let angle = -Math.PI / 2;
 
   Object.entries(colorMap).sort((a, b) => b[1].count - a[1].count).forEach(([color, info]) => {
@@ -682,12 +1324,17 @@ function drawPieChart() {
     ctx.save();
     ctx.translate(offsetX, offsetY);
 
-    // Draw shadow for selected
+    // 绘制阴影（仅选中项）
     if (isSelected) {
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 20;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 4;
+    } else {
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     }
 
     ctx.beginPath();
@@ -697,7 +1344,7 @@ function drawPieChart() {
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Add white border for selected
+    // 选中项添加白色边框
     if (isSelected) {
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 3;
@@ -802,7 +1449,7 @@ function renderSleepBlock() {
       const text = has ? escapeHtml(a.text) : COLOR_LABELS[SLEEP_COLOR];
       const el = document.createElement('div');
       el.className = 'time-block';
-      el.innerHTML = `<div class="time-label">${l}</div><div class="time-content filled" data-slot="${s}" style="--block-color:${color};--block-bg:${bg}" data-area="sleep"><div class="activity"><span class="activity-text">${text}</span>${has&&a.note?`<span class="activity-note">${escapeHtml(a.note)}</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div></div>`;
+      el.innerHTML = `<div class="time-label">${l}</div><div class="time-content filled" data-slot="${s}" style="--block-color:${color};--block-bg:${bg}" data-area="sleep"><div class="activity"><span class="activity-text">${text}</span>${has&&a.note?`<span class="activity-note-icon" data-slot="${s}">📝</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div></div>`;
       div.appendChild(el);
     });
   }
@@ -831,7 +1478,7 @@ function renderTimeBlocks() {
         const has = a && a.text;
         const block = document.createElement('div');
         block.className = 'time-block';
-        block.innerHTML = `<div class="time-label">${l}</div><div class="time-content ${has?'filled':'empty'}" data-slot="${s}" data-area="main" style="${has?`--block-color:${a.color};--block-bg:${a.color}15`:''}">${has?`<div class="activity"><span class="activity-text">${escapeHtml(a.text)}</span>${a.note?`<span class="activity-note">${escapeHtml(a.note)}</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div>`:''}</div>`;
+        block.innerHTML = `<div class="time-label">${l}</div><div class="time-content ${has?'filled':'empty'}" data-slot="${s}" data-area="main" style="${has?`--block-color:${a.color};--block-bg:${a.color}15`:''}">${has?`<div class="activity"><span class="activity-text">${escapeHtml(a.text)}</span>${a.note?`<span class="activity-note-icon" data-slot="${s}">📝</span>`:''}<button class="edit-btn" data-slot="${s}">&#9998;</button></div>`:''}</div>`;
         container.appendChild(block);
       });
     }
@@ -1042,6 +1689,7 @@ function formatSlotTime(slot) {
 
 function openModalForSlots(slots) {
   if (!currentUser) { showToast('请先登录'); showLoginModal(); return; }
+  if (!cloudLoaded) { showToast('数据加载中，请稍后'); return; }
   editingSlots = slots;
   const sorted = [...slots].sort((a, b) => {
     const ai = typeof a === 'string' && a.includes('.') ? parseInt(a) * 2 + 1 : parseInt(a) * 2;
@@ -1092,7 +1740,8 @@ function saveActivity() {
   const sel = document.querySelector('#colorPicker .color-option.selected');
   const color = sel ? sel.dataset.color : '#4a6cf7';
   if (!text) { showToast('请输入活动内容'); return; }
-  editingSlots.forEach(s => { dayData[s] = { text, note, color }; });
+  const now = Date.now();
+  editingSlots.forEach(s => { dayData[s] = { text, note, color, _ts: now }; });
   showLoading(true);
   saveToFirebase().then(() => {
     showLoading(false);
@@ -1130,10 +1779,14 @@ function deleteActivity() {
 // Date navigation
 function switchToDate(date) {
   currentDate = new Date(date);
+  noteLogDate = new Date(date);
   document.getElementById('currentDate').textContent = formatDate(currentDate);
   const key = getDateKey(currentDate);
   dayData = allCachedDays[key] || {};
   renderAll();
+  // 切换日期时重新加载待办（force）
+  todosLoaded = false;
+  fetchTodos(true);
 }
 
 document.getElementById('prevDay').addEventListener('click', () => {
@@ -1192,19 +1845,188 @@ document.getElementById('loginBtn').addEventListener('click', () => doLogin(docu
 document.getElementById('usernameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(e.target.value); });
 document.getElementById('userName').addEventListener('click', switchUser);
 
+// ===== 喝水事件 =====
+document.querySelectorAll('.water-quick[data-ml]').forEach(btn => {
+  btn.addEventListener('click', () => addWater(parseInt(btn.dataset.ml)));
+});
+document.getElementById('waterCustomBtn').addEventListener('click', () => {
+  const ml = parseInt(document.getElementById('waterCustomInput').value);
+  if (!ml || ml <= 0) { showToast('请输入有效数值'); return; }
+  document.getElementById('waterCustomInput').value = '';
+  addWater(ml);
+});
+document.getElementById('waterCustomInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('waterCustomBtn').click();
+});
+document.getElementById('waterUndoBtn').addEventListener('click', undoWater);
+
+// ===== 周待办事件 =====
+document.getElementById('todoAddBtn').addEventListener('click', () => {
+  if (!currentUser) { showToast('请先登录'); return; }
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if (!text) return;
+  weekTodos.push({ id: Date.now(), text, done: false });
+  input.value = '';
+  saveTodos();
+});
+document.getElementById('todoInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('todoAddBtn').click();
+});
+
+document.getElementById('todoList').addEventListener('click', (e) => {
+  if (!currentUser) return;
+  const checkEl = e.target.closest('.todo-check');
+  if (checkEl) {
+    const idx = parseInt(checkEl.dataset.index);
+    weekTodos[idx].done = !weekTodos[idx].done;
+    saveTodos();
+    return;
+  }
+  const editEl = e.target.closest('.todo-edit-btn');
+  if (editEl) {
+    startEditTodo(parseInt(editEl.dataset.index));
+    return;
+  }
+  const deleteEl = e.target.closest('.todo-delete');
+  if (deleteEl) {
+    const idx = parseInt(deleteEl.dataset.index);
+    weekTodos.splice(idx, 1);
+    saveTodos();
+  }
+});
+
+function startEditTodo(idx) {
+  const item = document.querySelector(`.todo-item[data-index="${idx}"]`);
+  if (!item) return;
+  const textEl = item.querySelector('.todo-text');
+  if (!textEl) return;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'todo-edit-input';
+  input.value = weekTodos[idx].text;
+  input.maxLength = 100;
+  textEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const finishEdit = () => {
+    const newText = input.value.trim();
+    if (newText && newText !== weekTodos[idx].text) {
+      weekTodos[idx].text = newText;
+      saveTodos();
+    } else {
+      renderTodos();
+    }
+  };
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') finishEdit();
+    if (ev.key === 'Escape') renderTodos();
+  });
+  input.addEventListener('blur', finishEdit);
+}
+
+// 双击编辑待办文字（桌面端）
+document.getElementById('todoList').addEventListener('dblclick', (e) => {
+  if (!currentUser) return;
+  const textEl = e.target.closest('.todo-text');
+  if (!textEl) return;
+  const item = textEl.closest('.todo-item');
+  startEditTodo(parseInt(item.dataset.index));
+});
+
+// 备注图标点击 → 弹出层显示完整备注
+document.addEventListener('click', (e) => {
+  const noteIcon = e.target.closest('.activity-note-icon');
+  const popover = document.getElementById('notePopover');
+  if (noteIcon) {
+    e.stopPropagation();
+    const slot = noteIcon.dataset.slot;
+    const d = dayData[slot];
+    if (!d || !d.note) return;
+    document.getElementById('notePopoverTime').textContent = slotToTime(slot);
+    document.getElementById('notePopoverText').textContent = d.note;
+    const rect = noteIcon.getBoundingClientRect();
+    let top = rect.bottom + 8;
+    let left = Math.max(12, rect.left - 24);
+    if (left + 300 > window.innerWidth) left = window.innerWidth - 312;
+    if (top + 120 > window.innerHeight) top = rect.top - 8 - 120;
+    popover.style.top = top + 'px';
+    popover.style.left = left + 'px';
+    popover.classList.add('active');
+    return;
+  }
+  if (popover.classList.contains('active') && !popover.contains(e.target)) {
+    popover.classList.remove('active');
+  }
+});
+
+// 备注日志面板折叠切换
+document.querySelector('.note-log-header').addEventListener('click', () => {
+  document.getElementById('noteLogCard').classList.toggle('collapsed');
+});
+
+// 备注日志搜索
+document.getElementById('noteLogSearch').addEventListener('input', () => {
+  renderNoteLog();
+});
+// 防止搜索框输入时触发面板折叠
+document.getElementById('noteLogSearch').addEventListener('click', (e) => e.stopPropagation());
+
+// 备注日志翻页
+document.getElementById('noteLogPrev').addEventListener('click', () => {
+  const allDates = getDatesWithNotes();
+  const noteLogKey = getDateKey(noteLogDate);
+  const idx = allDates.indexOf(noteLogKey);
+  if (idx >= 0 && idx < allDates.length - 1) {
+    const parts = allDates[idx + 1].split('-');
+    noteLogDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    renderNoteLog();
+  }
+});
+document.getElementById('noteLogNext').addEventListener('click', () => {
+  const allDates = getDatesWithNotes();
+  const noteLogKey = getDateKey(noteLogDate);
+  const idx = allDates.indexOf(noteLogKey);
+  if (idx > 0) {
+    const parts = allDates[idx - 1].split('-');
+    noteLogDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    renderNoteLog();
+  }
+});
+
+// 点击备注日志项：搜索模式下跳转到对应日期并清空搜索
+document.getElementById('noteLogList').addEventListener('click', (e) => {
+  const item = e.target.closest('.note-log-item');
+  if (!item) return;
+  const dateKey = item.dataset.date;
+  if (!dateKey) return;
+  const query = document.getElementById('noteLogSearch').value.trim();
+  const parts = dateKey.split('-');
+  const targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  // 清空搜索，跳转到对应日期
+  document.getElementById('noteLogSearch').value = '';
+  noteLogDate = new Date(targetDate);
+  switchToDate(targetDate);
+});
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeModal(); hideLoginModal(); }
+  if (e.key === 'Escape') { closeModal(); hideLoginModal(); document.getElementById('notePopover').classList.remove('active'); }
   if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active') && e.target.tagName !== 'TEXTAREA') saveActivity();
 });
 
 // Init
+currentDate = new Date();
+noteLogDate = new Date();
+loadLocalData();
 document.getElementById('currentDate').textContent = formatDate(currentDate);
 renderColorLegend();
+renderAll();
 const saved = localStorage.getItem('tt_username');
 if (saved && isValidUsername(saved)) {
   currentUser = saved;
   document.getElementById('userName').textContent = saved;
-  connectToFirebase(saved);
+  connectToSupabase(saved);
 } else {
   showLoginModal();
 }
