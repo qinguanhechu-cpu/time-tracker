@@ -288,7 +288,7 @@
   .time-blocks { display: flex; flex-direction: column; gap: 12px; }
   .period-section { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; padding: 10px 12px; }
   .period-label { font-size: 0.72rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-  .time-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; user-select: none; -webkit-user-select: none; }
+  .time-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
   .time-block { display: contents; }
   .time-content {
     border-radius: 8px; min-height: 60px; padding: 6px 6px;
@@ -575,7 +575,7 @@
       <div class="chart-tab" data-period="month">月</div>
     </div>
     <div id="chartContent"><div class="chart-empty">记录一些活动后，这里会显示时间分布</div></div>
-    <div class="chart-hint">点击「多选」按钮进入选择模式，可批量填写多个时段</div>
+    <div class="chart-hint">长按格子进入多选，也可点顶部「多选」按钮</div>
   </div>
 
   <div class="color-legend" id="colorLegend">
@@ -1771,6 +1771,43 @@ document.getElementById('sleepActivities').addEventListener('click', (e) => {
   openModalForSlots(editingSlots);
 });
 
+// ===== LONG-PRESS TO ENTER SELECT MODE =====
+let lpTimer = null;
+let lpFired = false;
+let lpSlot = null;
+const LP_DELAY = 400;
+
+function lpStart(e) {
+  const content = e.target.closest('.time-content');
+  if (!content) return;
+  lpSlot = content.dataset.slot;
+  lpFired = false;
+  lpTimer = setTimeout(() => {
+    lpFired = true;
+    if (!isSelectMode) enterSelectMode();
+    // Pre-select the long-pressed cell
+    if (lpSlot && !selectedSlots.has(lpSlot)) {
+      toggleSlot(lpSlot);
+    }
+  }, LP_DELAY);
+}
+function lpMove(e) {
+  if (lpFired) e.preventDefault();
+}
+function lpEnd(e) {
+  clearTimeout(lpTimer);
+  if (lpFired && e) e.preventDefault();
+  lpTimer = null;
+  lpFired = false;
+}
+
+timeBlocksContainer.addEventListener('touchstart', lpStart, { passive: true });
+timeBlocksContainer.addEventListener('touchmove', lpMove, { passive: false });
+timeBlocksContainer.addEventListener('touchend', lpEnd, { passive: false });
+
+document.getElementById('sleepActivities').addEventListener('touchstart', lpStart, { passive: true });
+document.getElementById('sleepActivities').addEventListener('touchmove', lpMove, { passive: false });
+document.getElementById('sleepActivities').addEventListener('touchend', lpEnd, { passive: false });
 
 // Sleep block toggle
 document.getElementById('sleepHeader').addEventListener('click', (e) => {
