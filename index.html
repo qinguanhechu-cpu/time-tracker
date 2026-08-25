@@ -288,7 +288,7 @@
   .time-blocks { display: flex; flex-direction: column; gap: 12px; }
   .period-section { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; padding: 10px 12px; }
   .period-label { font-size: 0.72rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-  .time-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+  .time-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: pan-y; }
   .time-block { display: contents; }
   .time-content {
     border-radius: 8px; min-height: 60px; padding: 6px 6px;
@@ -1779,39 +1779,42 @@ document.getElementById('sleepActivities').addEventListener('click', (e) => {
 });
 
 // ===== LONG-PRESS TO ENTER SELECT MODE =====
-function lpStart(e) {
-  const content = e.target.closest('.time-content');
-  if (!content) return;
-  e.preventDefault(); // 阻止文字选择/右键菜单
+function lpFire() {
+  lpFired = true;
+  lpCancelled = true;
+  if (!isSelectMode) enterSelectMode();
+  if (lpSlot && !selectedSlots.has(lpSlot)) toggleSlot(lpSlot);
+}
+function lpBegin(target) {
+  const content = target.closest('.time-content');
+  if (!content) return false;
   lpSlot = content.dataset.slot;
   lpFired = false;
   lpCancelled = false;
-  lpTimer = setTimeout(() => {
-    lpFired = true;
-    lpCancelled = true;
-    if (!isSelectMode) enterSelectMode();
-    if (lpSlot && !selectedSlots.has(lpSlot)) {
-      toggleSlot(lpSlot);
-    }
-  }, LP_DELAY);
-}
-function lpMove(e) {
-  if (lpFired) e.preventDefault();
-}
-function lpEnd(e) {
   clearTimeout(lpTimer);
-  if (lpFired && e) e.preventDefault(); // Cancel the subsequent click event
-  lpTimer = null;
-  // Don't reset lpFired here - let click handler check it
+  lpTimer = setTimeout(lpFire, LP_DELAY);
+  return true;
 }
+// Touch (mobile)
+function lpStart(e) { if (lpBegin(e.target)) {} }
+function lpMove(e) { if (lpFired) e.preventDefault(); }
+function lpEnd(e) { clearTimeout(lpTimer); lpTimer = null; }
+// Mouse (desktop long-press)
+function lpMouseDown(e) { if (e.button === 0) lpBegin(e.target); }
+function lpMouseUp() { clearTimeout(lpTimer); lpTimer = null; }
 
-timeBlocksContainer.addEventListener('touchstart', lpStart, { passive: false });
+timeBlocksContainer.addEventListener('touchstart', lpStart, { passive: true });
 timeBlocksContainer.addEventListener('touchmove', lpMove, { passive: false });
-timeBlocksContainer.addEventListener('touchend', lpEnd, { passive: false });
+timeBlocksContainer.addEventListener('touchend', lpEnd, { passive: true });
+timeBlocksContainer.addEventListener('mousedown', lpMouseDown);
 
-document.getElementById('sleepActivities').addEventListener('touchstart', lpStart, { passive: false });
+document.getElementById('sleepActivities').addEventListener('touchstart', lpStart, { passive: true });
 document.getElementById('sleepActivities').addEventListener('touchmove', lpMove, { passive: false });
-document.getElementById('sleepActivities').addEventListener('touchend', lpEnd, { passive: false });
+document.getElementById('sleepActivities').addEventListener('touchend', lpEnd, { passive: true });
+document.getElementById('sleepActivities').addEventListener('mousedown', lpMouseDown);
+
+document.addEventListener('mouseup', lpMouseUp);
+document.addEventListener('touchcancel', lpEnd, { passive: true });
 
 // Sleep block toggle
 document.getElementById('sleepHeader').addEventListener('click', (e) => {
