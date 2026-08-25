@@ -1775,6 +1775,7 @@ document.getElementById('sleepActivities').addEventListener('click', (e) => {
 let lpTimer = null;
 let lpFired = false;
 let lpSlot = null;
+let lpEvent = null;
 const LP_DELAY = 400;
 
 function lpStart(e) {
@@ -1782,10 +1783,11 @@ function lpStart(e) {
   if (!content) return;
   lpSlot = content.dataset.slot;
   lpFired = false;
+  lpEvent = e;
   lpTimer = setTimeout(() => {
     lpFired = true;
+    e.preventDefault(); // Block text selection / context menu
     if (!isSelectMode) enterSelectMode();
-    // Pre-select the long-pressed cell
     if (lpSlot && !selectedSlots.has(lpSlot)) {
       toggleSlot(lpSlot);
     }
@@ -1801,13 +1803,13 @@ function lpEnd(e) {
   lpFired = false;
 }
 
-timeBlocksContainer.addEventListener('touchstart', lpStart, { passive: true });
+timeBlocksContainer.addEventListener('touchstart', lpStart, { passive: false });
 timeBlocksContainer.addEventListener('touchmove', lpMove, { passive: false });
-timeBlocksContainer.addEventListener('touchend', lpEnd, { passive: false });
+timeBlocksContainer.addEventListener('touchend', (e) => { if (lpFired) e.preventDefault(); clearTimeout(lpTimer); lpTimer = null; lpFired = false; }, { passive: false });
 
-document.getElementById('sleepActivities').addEventListener('touchstart', lpStart, { passive: true });
+document.getElementById('sleepActivities').addEventListener('touchstart', lpStart, { passive: false });
 document.getElementById('sleepActivities').addEventListener('touchmove', lpMove, { passive: false });
-document.getElementById('sleepActivities').addEventListener('touchend', lpEnd, { passive: false });
+document.getElementById('sleepActivities').addEventListener('touchend', (e) => { if (lpFired) e.preventDefault(); clearTimeout(lpTimer); lpTimer = null; lpFired = false; }, { passive: false });
 
 // Sleep block toggle
 document.getElementById('sleepHeader').addEventListener('click', (e) => {
