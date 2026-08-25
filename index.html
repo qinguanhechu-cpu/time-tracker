@@ -1739,6 +1739,7 @@ function updateStats() {
 // ===== CLICK TO EDIT =====
 const timeBlocksContainer = document.getElementById('timeBlocks');
 timeBlocksContainer.addEventListener('click', (e) => {
+  if (lpCancelled) { lpCancelled = false; return; }
   const content = e.target.closest('.time-content');
   if (!content) return;
   const slot = content.dataset.slot;
@@ -1756,6 +1757,7 @@ timeBlocksContainer.addEventListener('click', (e) => {
 
 // Sleep activities click
 document.getElementById('sleepActivities').addEventListener('click', (e) => {
+  if (lpCancelled) { lpCancelled = false; return; }
   const content = e.target.closest('.time-content');
   if (!content) return;
   const slot = content.dataset.slot;
@@ -1775,7 +1777,7 @@ document.getElementById('sleepActivities').addEventListener('click', (e) => {
 let lpTimer = null;
 let lpFired = false;
 let lpSlot = null;
-let lpEvent = null;
+let lpCancelled = false; // Set true when long-press fires, checked by click handler
 const LP_DELAY = 400;
 
 function lpStart(e) {
@@ -1783,10 +1785,10 @@ function lpStart(e) {
   if (!content) return;
   lpSlot = content.dataset.slot;
   lpFired = false;
-  lpEvent = e;
+  lpCancelled = false;
   lpTimer = setTimeout(() => {
     lpFired = true;
-    e.preventDefault(); // Block text selection / context menu
+    lpCancelled = true; // Signal click handler to skip
     if (!isSelectMode) enterSelectMode();
     if (lpSlot && !selectedSlots.has(lpSlot)) {
       toggleSlot(lpSlot);
@@ -1798,18 +1800,18 @@ function lpMove(e) {
 }
 function lpEnd(e) {
   clearTimeout(lpTimer);
-  if (lpFired && e) e.preventDefault();
+  if (lpFired && e) e.preventDefault(); // Cancel the subsequent click event
   lpTimer = null;
-  lpFired = false;
+  // Don't reset lpFired here - let click handler check it
 }
 
 timeBlocksContainer.addEventListener('touchstart', lpStart, { passive: false });
 timeBlocksContainer.addEventListener('touchmove', lpMove, { passive: false });
-timeBlocksContainer.addEventListener('touchend', (e) => { if (lpFired) e.preventDefault(); clearTimeout(lpTimer); lpTimer = null; lpFired = false; }, { passive: false });
+timeBlocksContainer.addEventListener('touchend', lpEnd, { passive: false });
 
 document.getElementById('sleepActivities').addEventListener('touchstart', lpStart, { passive: false });
 document.getElementById('sleepActivities').addEventListener('touchmove', lpMove, { passive: false });
-document.getElementById('sleepActivities').addEventListener('touchend', (e) => { if (lpFired) e.preventDefault(); clearTimeout(lpTimer); lpTimer = null; lpFired = false; }, { passive: false });
+document.getElementById('sleepActivities').addEventListener('touchend', lpEnd, { passive: false });
 
 // Sleep block toggle
 document.getElementById('sleepHeader').addEventListener('click', (e) => {
