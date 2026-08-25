@@ -295,7 +295,6 @@
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     cursor: pointer; position: relative; transition: all 0.12s;
     text-align: center; border: 1.5px solid transparent;
-    touch-action: none;
   }
   .time-content.empty { background: #f7f8fa; color: #c8c8c8; border-color: #eceef2; }
   .time-content.empty::after { content: "+"; font-size: 1.1rem; line-height: 1; }
@@ -696,7 +695,12 @@ function getWeekKey(date) {
 // Multi-select mode state
 let isSelectMode = false;
 let selectedSlots = new Set();
-let lastSelectedSlot = null; // For shift+click range selection
+let lastSelectedSlot = null;
+let lpTimer = null;
+let lpFired = false;
+let lpSlot = null;
+let lpCancelled = false;
+const LP_DELAY = 400;
 
 function enterSelectMode() {
   isSelectMode = true;
@@ -1775,21 +1779,16 @@ document.getElementById('sleepActivities').addEventListener('click', (e) => {
 });
 
 // ===== LONG-PRESS TO ENTER SELECT MODE =====
-let lpTimer = null;
-let lpFired = false;
-let lpSlot = null;
-let lpCancelled = false; // Set true when long-press fires, checked by click handler
-const LP_DELAY = 400;
-
 function lpStart(e) {
   const content = e.target.closest('.time-content');
   if (!content) return;
+  e.preventDefault(); // 阻止文字选择/右键菜单
   lpSlot = content.dataset.slot;
   lpFired = false;
   lpCancelled = false;
   lpTimer = setTimeout(() => {
     lpFired = true;
-    lpCancelled = true; // Signal click handler to skip
+    lpCancelled = true;
     if (!isSelectMode) enterSelectMode();
     if (lpSlot && !selectedSlots.has(lpSlot)) {
       toggleSlot(lpSlot);
