@@ -301,7 +301,7 @@
   .time-content.filled { border-left: 3px solid var(--block-color, var(--primary)); background: var(--block-bg, var(--primary-light)); }
   .time-content:hover { transform: scale(1.04); z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
-  .slot-time { font-size: 0.68rem; font-weight: 600; color: var(--text-light); line-height: 1.2; margin-bottom: 2px; }
+  .slot-time { font-size: 0.6rem; font-weight: 600; color: var(--text-light); line-height: 1.2; margin-bottom: 2px; white-space: nowrap; letter-spacing: -0.2px; }
   .slot-text { font-size: 0.75rem; font-weight: 500; color: var(--text); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   .slot-note { position: absolute; top: 3px; right: 3px; font-size: 0.55rem; line-height: 1; }
 
@@ -1652,6 +1652,15 @@ function handlePieClick(e) {
 }
 
 // ===== SLEEP BLOCK =====
+function slotRangeLabel(s) {
+  const num = parseFloat(s);
+  const h = Math.floor(num);
+  const isHalf = (num - h) >= 0.5;
+  const sh = h, sm = isHalf ? '30' : '00';
+  const eh = isHalf ? h + 1 : h, em = isHalf ? '00' : '30';
+  return `${sh}:${sm}-${eh}:${em}`;
+}
+
 function renderSleepBlock() {
   const block = document.getElementById('sleepBlock');
   const div = document.getElementById('sleepActivities');
@@ -1669,11 +1678,9 @@ function renderSleepBlock() {
       const has = a && a.text;
       const color = has ? a.color : SLEEP_COLOR;
       const bg = has ? `${a.color}15` : `${SLEEP_COLOR}15`;
-      const h = Math.floor(parseFloat(s));
-      const m = s.toString().includes('.5') ? '30' : '00';
       const cell = document.createElement('div');
       cell.className = 'time-block';
-      cell.innerHTML = `<div class="time-content ${has ? 'filled' : 'empty'}" data-slot="${s}" data-area="sleep" style="--block-color:${color};--block-bg:${bg}"><div class="slot-check"></div>${has ? `<div class="slot-time">${h}:${m}</div><div class="slot-text">${escapeHtml(a.text)}</div>${a.note ? '<div class="slot-note"></div>' : ''}` : `<div class="slot-time">${h}:${m}</div>`}</div>`;
+      cell.innerHTML = `<div class="time-content ${has ? 'filled' : 'empty'}" data-slot="${s}" data-area="sleep" style="--block-color:${color};--block-bg:${bg}"><div class="slot-check"></div>${has ? `<div class="slot-time">${slotRangeLabel(s)}</div><div class="slot-text">${escapeHtml(a.text)}</div>${a.note ? '<div class="slot-note"></div>' : ''}` : `<div class="slot-time">${slotRangeLabel(s)}</div>`}</div>`;
       grid.appendChild(cell);
     });
   }
@@ -1706,11 +1713,9 @@ function renderTimeBlocks() {
       [i, i + '.5'].forEach(s => {
         const a = dayData[s];
         const has = a && a.text;
-        const h = Math.floor(parseFloat(s));
-        const m = s.toString().includes('.5') ? '30' : '00';
         const cell = document.createElement('div');
         cell.className = 'time-block';
-        cell.innerHTML = `<div class="time-content ${has ? 'filled' : 'empty'}" data-slot="${s}" data-area="main" style="${has ? `--block-color:${a.color};--block-bg:${a.color}15` : ''}"><div class="slot-check"></div>${has ? `<div class="slot-time">${h}:${m}</div><div class="slot-text">${escapeHtml(a.text)}</div>${a.note ? '<div class="slot-note"></div>' : ''}` : `<div class="slot-time">${h}:${m}</div>`}</div>`;
+        cell.innerHTML = `<div class="time-content ${has ? 'filled' : 'empty'}" data-slot="${s}" data-area="main" style="${has ? `--block-color:${a.color};--block-bg:${a.color}15` : ''}"><div class="slot-check"></div>${has ? `<div class="slot-time">${slotRangeLabel(s)}</div><div class="slot-text">${escapeHtml(a.text)}</div>${a.note ? '<div class="slot-note"></div>' : ''}` : `<div class="slot-time">${slotRangeLabel(s)}</div>`}</div>`;
         grid.appendChild(cell);
       });
     }
