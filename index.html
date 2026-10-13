@@ -143,6 +143,16 @@
   .todo-progress-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
   .todo-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s; }
 
+  /* 日期计算 */
+  .datecalc-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; }
+  .datecalc-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .datecalc-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .datecalc-row input[type="date"] { flex: 1; min-width: 128px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: inherit; color: var(--text); background: var(--card-bg); }
+  .datecalc-row input[type="date"]:focus { outline: none; border-color: var(--primary); }
+  .datecalc-sep { color: var(--text-light); font-size: 0.85rem; flex-shrink: 0; }
+  .datecalc-result { margin-top: 12px; padding: 12px 14px; background: var(--primary-light); border-radius: 8px; text-align: center; font-size: 1.15rem; font-weight: 700; color: var(--primary); }
+  .datecalc-result .hint { display: block; font-size: 0.72rem; font-weight: 400; color: var(--text-light); margin-top: 2px; }
+
   .chart-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; }
   .chart-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-light); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
   .chart-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
@@ -399,6 +409,12 @@
     .stat-card .label { font-size: 0.8rem; }
     .stat-card .value { font-size: 1.4rem; }
 
+    /* 日期计算 */
+    .datecalc-card { padding: 14px 12px; margin-bottom: 12px; }
+    .datecalc-card h3 { font-size: 0.8rem; }
+    .datecalc-row input[type="date"] { font-size: 1rem; padding: 10px 10px; }
+    .datecalc-result { font-size: 1.2rem; }
+
     /* 图表区域 */
     .chart-card { padding: 14px 12px; margin-bottom: 12px; }
     .chart-card h3 { font-size: 0.8rem; }
@@ -516,6 +532,16 @@
     <div class="stat-card"><div class="label">已记录</div><div class="value" id="statRecorded">0h</div></div>
     <div class="stat-card"><div class="label">空闲</div><div class="value" id="statEmpty">24h</div></div>
     <div class="stat-card"><div class="label">活动数</div><div class="value" id="statActivities">0</div></div>
+  </div>
+
+  <div class="datecalc-card" id="dateCalcCard">
+    <h3>日期计算</h3>
+    <div class="datecalc-row">
+      <input type="date" id="dateCalcStart" aria-label="开始日期">
+      <span class="datecalc-sep">至</span>
+      <input type="date" id="dateCalcEnd" aria-label="结束日期">
+    </div>
+    <div class="datecalc-result" id="dateCalcResult">—</div>
   </div>
 
   <div class="water-card" id="waterCard">
@@ -2286,10 +2312,64 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && document.getElementById('modal').classList.contains('active') && e.target.tagName !== 'TEXTAREA') saveActivity();
 });
 
+// ===== 日期计算 =====
+function computeDateDiff() {
+  const startInput = document.getElementById('dateCalcStart');
+  const endInput = document.getElementById('dateCalcEnd');
+  const resultEl = document.getElementById('dateCalcResult');
+  const s = startInput.value;
+  const e = endInput.value;
+
+  if (!s || !e) {
+    resultEl.textContent = '请选择开始和结束日期';
+    return;
+  }
+
+  let sd = new Date(s + 'T00:00:00');
+  let ed = new Date(e + 'T00:00:00');
+  if (isNaN(sd) || isNaN(ed)) {
+    resultEl.textContent = '日期无效';
+    return;
+  }
+
+  // 结束早于开始时自动交换，保证结果为正向
+  if (sd > ed) {
+    [sd, ed] = [ed, sd];
+    startInput.value = e;
+    endInput.value = s;
+  }
+
+  // 头尾都算：相差天数 + 1
+  const days = Math.round((ed - sd) / 86400000) + 1;
+  const weeks = Math.floor(days / 7);
+  const rem = days % 7;
+
+  let text, hint = '';
+  if (days === 1) {
+    text = '1天';
+    hint = '起止为同一天';
+  } else if (weeks === 0) {
+    text = `${days}天`;
+    hint = '不足一周';
+  } else if (rem === 0) {
+    text = `${days}天，即${weeks}周`;
+  } else {
+    text = `${days}天，即${weeks}周${rem}天`;
+  }
+  resultEl.innerHTML = hint ? `${text}<span class="hint">${hint}</span>` : text;
+}
+
+document.getElementById('dateCalcStart').addEventListener('change', computeDateDiff);
+document.getElementById('dateCalcEnd').addEventListener('change', computeDateDiff);
+
 // Init
 currentDate = effectiveDay();
 noteLogDate = effectiveDay();
 loadLocalData();
+const calcToday = getDateKey(new Date());
+document.getElementById('dateCalcStart').value = calcToday;
+document.getElementById('dateCalcEnd').value = calcToday;
+computeDateDiff();
 document.getElementById('currentDate').textContent = formatDate(currentDate);
 renderColorLegend();
 renderAll();
